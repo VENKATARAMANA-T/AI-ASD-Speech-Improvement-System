@@ -1,0 +1,36 @@
+.venv/
+.venv-nemo/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.env
+# model weights and HF cache should never be committed
+models/
+*.nemo
+*.onnx
+*.safetensors
+
+# local audio and results
+samples/*.wav
+samples/*.mp3
+samples/*.m4a
+samples/*.flac
+!samples/README.md
+assets/*.wav
+data/
+results/
+*.log
+
+.env
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# rendered pronunciations, regenerated on demand
+cache/
+
+# local tool settings
+.claude/

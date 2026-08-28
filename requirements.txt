@@ -1,0 +1,31 @@
+# Python 3.11 is required. Newer versions do not yet have wheels for this stack.
+#
+# Install CPU-only torch first, from PyTorch's own index:
+#   pip install torch torchaudio --index-url https://download.pytorch.org/whl/cpu
+# then:
+#   pip install -r requirements.txt
+
+transformers>=4.44
+onnxruntime>=1.20          # NOT onnxruntime-gpu unless you have CUDA
+
+soundfile>=0.12
+librosa>=0.10
+numpy>=1.26
+# Decodes M4A/AAC, WebM/Opus and friends that libsndfile cannot open. Its wheel
+# bundles the ffmpeg libraries, so no system ffmpeg install is needed.
+av>=12
+
+fastapi>=0.115
+uvicorn[standard]>=0.30
+python-multipart>=0.0.9
+python-dotenv>=1.0        # loads .env so HF_TOKEN there is actually picked up
+edge-tts>=6.1              # neural Tamil voices for the Pronounce button
+
+# doctor portal: PostgreSQL (driver + connection pool) and JWT sign-ins
+psycopg[binary,pool]>=3.2
+PyJWT>=2.9
+
+# evaluation and tests
+jiwer>=3.0
+pytest>=8.0
+httpx>=0.27
