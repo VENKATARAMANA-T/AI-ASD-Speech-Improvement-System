@@ -1,0 +1,2218 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Tamil Tutor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800;900&family=Noto+Sans+Tamil:wght@400;600;700&display=swap" rel="stylesheet" />
+<style>
+  /* ---------- design tokens ---------- */
+  :root {
+    color-scheme: dark;
+    --bg: #0f1222;
+    --bg-2: #161a30;
+    --panel: #1c2140;
+    --panel-2: #232a52;
+    --border: #2b3364;
+    --text: #eef0ff;
+    --muted: #9aa3c7;
+    --brand: #7c6cff;
+    --brand-2: #5be0d8;
+    --ok: #38d996;
+    --warn: #ffc857;
+    --bad: #ff6b8a;
+    --c-vowels: #ff8a65;
+    --c-words: #4dd0e1;
+    --c-short: #ffd54f;
+    --c-long: #b388ff;
+    --shadow: 0 10px 30px rgba(0,0,0,.35);
+    --r: 20px;
+    --r-sm: 14px;
+    --sidebar: 260px;
+  }
+  [data-theme="light"] {
+    color-scheme: light;
+    --bg: #f4f6ff;
+    --bg-2: #ffffff;
+    --panel: #ffffff;
+    --panel-2: #f1f3ff;
+    --border: #e1e5f7;
+    --text: #1b1f3a;
+    --muted: #6a7195;
+    --shadow: 0 10px 30px rgba(40,50,120,.10);
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 16px/1.5 "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .tam { font-family: "Noto Sans Tamil", "Nirmala UI", "Latha", system-ui, sans-serif; }
+  button { font: inherit; cursor: pointer; }
+  a { color: inherit; text-decoration: none; }
+  .hidden { display: none !important; }
+
+  /* ---------- layout ---------- */
+  .app { display: grid; grid-template-columns: var(--sidebar) 1fr; min-height: 100vh; }
+  .sidebar {
+    background: var(--bg-2); border-right: 1px solid var(--border);
+    padding: 22px 16px; display: flex; flex-direction: column; gap: 6px;
+    position: sticky; top: 0; height: 100vh; overflow-y: auto;
+  }
+  .brand { display: flex; align-items: center; gap: 12px; padding: 6px 10px 20px; }
+  .logo {
+    width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center;
+    background: linear-gradient(135deg, var(--brand), var(--brand-2)); color: #fff;
+    font-weight: 900; font-size: 22px; box-shadow: 0 6px 18px rgba(124,108,255,.35);
+  }
+  .brand h1 { font-size: 19px; margin: 0; font-weight: 900; letter-spacing: -.01em; }
+  .brand small { display: block; color: var(--muted); font-size: 12px; font-weight: 700; }
+  .nav { display: flex; flex-direction: column; gap: 4px; }
+  .nav a {
+    display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 14px;
+    font-weight: 700; color: var(--muted); transition: background .15s, color .15s, transform .1s;
+  }
+  .nav a .ic { font-size: 20px; width: 26px; text-align: center; }
+  .nav a:hover { background: var(--panel); color: var(--text); transform: translateX(2px); }
+  .nav a.active { background: linear-gradient(135deg, rgba(124,108,255,.25), rgba(91,224,216,.18)); color: var(--text); }
+  /* Arcade Mode opens its own page in a new tab, so it is styled as a doorway */
+  .nav a.arcade { background: linear-gradient(135deg, #ffd54a, #ff8a5b); color: #3b2a00; box-shadow: 0 6px 16px rgba(255,138,91,.28); }
+  .nav a.arcade:hover { color: #3b2a00; filter: brightness(1.05); }
+  .nav a.arcade .ext { margin-left: auto; font-size: 12px; opacity: .75; }
+  .sidebar .spacer { flex: 1; }
+  .status-pill { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--border); background: var(--panel); border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 800; color: var(--muted); white-space: nowrap; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); flex: none; }
+  .dot.ok { background: var(--ok); box-shadow: 0 0 0 4px rgba(56,217,150,.18); }
+  .dot.warm { background: var(--warn); }
+  .dot.bad { background: var(--bad); }
+
+  .main { padding: 28px 36px 60px; max-width: 1180px; width: 100%; margin: 0 auto; }
+  .topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 22px; flex-wrap: wrap; }
+  .topbar-left { display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1; }
+  .topbar-right { display: flex; align-items: center; gap: 10px; flex: none; }
+  .crumbs { display: flex; align-items: center; gap: 8px; color: var(--muted); font-weight: 700; font-size: 14px; flex-wrap: wrap; }
+  .crumbs a:hover { color: var(--text); }
+  .crumbs .sep { opacity: .5; }
+  .theme-btn {
+    border: 1px solid var(--border); background: var(--panel); color: var(--text);
+    border-radius: 999px; padding: 8px 14px; font-weight: 800; display: inline-flex; gap: 8px; align-items: center;
+  }
+
+  h2.title { font-size: 30px; margin: 0 0 6px; font-weight: 900; letter-spacing: -.02em; }
+  p.lead { margin: 0 0 24px; color: var(--muted); font-weight: 600; }
+
+  /* ---------- cards ---------- */
+  .grid { display: grid; gap: 18px; }
+  .grid.cats { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+  .grid.items { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  .grid.items.wide { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+
+  .card {
+    background: var(--panel); border: 1px solid var(--border); border-radius: var(--r);
+    box-shadow: var(--shadow); padding: 22px; position: relative; overflow: hidden;
+  }
+  .cat {
+    cursor: pointer; transition: transform .15s, box-shadow .15s; min-height: 190px;
+    display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .cat:hover { transform: translateY(-4px); box-shadow: 0 18px 40px rgba(0,0,0,.4); }
+  .cat::before {
+    content: ""; position: absolute; inset: 0 0 auto 0; height: 6px; background: var(--c);
+  }
+  .cat .emoji { font-size: 44px; line-height: 1; }
+  .cat h3 { margin: 12px 0 2px; font-size: 21px; font-weight: 900; }
+  .cat .sub { color: var(--muted); font-weight: 700; font-size: 14px; }
+  .cat .foot { display: flex; align-items: center; justify-content: space-between; margin-top: 16px; }
+  .pill { background: var(--panel-2); border: 1px solid var(--border); border-radius: 999px; padding: 4px 11px; font-size: 12.5px; font-weight: 800; color: var(--muted); }
+  .ring { width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 900;
+          background: conic-gradient(var(--c) calc(var(--p) * 1%), var(--panel-2) 0); }
+  .ring span { width: 36px; height: 36px; border-radius: 50%; background: var(--panel); display: grid; place-items: center; }
+
+  .tile {
+    cursor: pointer; text-align: center; padding: 20px 14px 16px; transition: transform .12s, border-color .12s;
+    border: 2px solid var(--border);
+  }
+  .tile:hover { transform: translateY(-3px) scale(1.02); border-color: var(--c); }
+  .tile .big { font-size: 40px; line-height: 1.2; font-weight: 700; }
+  .tile.wide .big { font-size: 22px; line-height: 1.5; }
+  .tile .rom { color: var(--muted); font-weight: 800; font-size: 14px; margin-top: 4px; }
+  .tile .mean { color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+  .stars { margin-top: 10px; letter-spacing: 2px; font-size: 15px; }
+  .stars .on { color: var(--warn); }
+  .stars .off { opacity: .25; }
+
+  /* ---------- practice ---------- */
+  .practice { display: grid; grid-template-columns: 1.15fr .85fr; gap: 20px; align-items: start; }
+  @media (max-width: 900px) { .practice { grid-template-columns: 1fr; } }
+  .hero {
+    text-align: center; padding: 36px 24px 28px; border: 2px solid var(--border);
+    background: linear-gradient(160deg, var(--panel), var(--panel-2));
+  }
+  .hero::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 6px; background: var(--c); }
+  .hero .word { font-size: 64px; line-height: 1.2; font-weight: 700; }
+  .hero .word.sentence { font-size: 34px; line-height: 1.5; }
+  .hero .word.long { font-size: 27px; }
+  .hero .say { margin-top: 10px; font-size: 20px; font-weight: 900; }
+  .hero .say b { color: var(--brand-2); }
+  .hero .mean { color: var(--muted); font-weight: 700; margin-top: 2px; }
+  .listen { display: flex; justify-content: center; gap: 12px; margin-top: 22px; flex-wrap: wrap; }
+  .btn {
+    border: 0; border-radius: 999px; padding: 13px 22px; font-weight: 900; font-size: 15px;
+    display: inline-flex; align-items: center; gap: 9px; transition: transform .1s, filter .15s, opacity .15s;
+    color: #fff; background: var(--brand);
+  }
+  .btn:hover { transform: translateY(-1px); filter: brightness(1.08); }
+  .btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+  .btn.alt { background: transparent; color: var(--text); border: 2px solid var(--border); }
+  .btn.ok { background: var(--ok); color: #05261a; }
+  .btn.big { padding: 16px 28px; font-size: 17px; }
+  .btn.playing { animation: glow 1s ease-in-out infinite; }
+  @keyframes glow { 0%,100% { box-shadow: 0 0 0 0 rgba(124,108,255,.5); } 50% { box-shadow: 0 0 0 12px rgba(124,108,255,0); } }
+
+  .rec-card { text-align: center; padding: 26px 22px; }
+  .rec-card h4 { margin: 0 0 4px; font-size: 17px; font-weight: 900; }
+  .rec-card .hint { color: var(--muted); font-weight: 700; font-size: 14px; min-height: 22px; }
+  .mic {
+    width: 112px; height: 112px; border-radius: 50%; border: 0; margin: 18px auto 10px;
+    background: linear-gradient(135deg, var(--brand), #a78bfa); color: #fff; font-size: 44px;
+    display: grid; place-items: center; box-shadow: 0 14px 34px rgba(124,108,255,.45);
+    transition: transform .12s;
+  }
+  .mic:hover { transform: scale(1.05); }
+  .mic:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+  .mic.on { background: linear-gradient(135deg, var(--bad), #ff9db0); animation: pulse 1.4s ease-out infinite; }
+  @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255,107,138,.55); } 70% { box-shadow: 0 0 0 24px rgba(255,107,138,0); } 100% { box-shadow: 0 0 0 0 rgba(255,107,138,0); } }
+  .timer { font-variant-numeric: tabular-nums; font-size: 30px; font-weight: 900; }
+  .meter { height: 8px; background: var(--panel-2); border-radius: 4px; overflow: hidden; max-width: 260px; margin: 12px auto 0; }
+  .meter i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--brand-2), var(--brand)); transition: width .06s linear; }
+  .clip { margin-top: 14px; display: none; flex-direction: column; align-items: center; gap: 10px; }
+  .clip.show { display: flex; }
+  audio { height: 38px; width: 100%; max-width: 320px; }
+  .actions { display: flex; justify-content: center; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+
+  .bar { height: 4px; background: var(--panel-2); border-radius: 2px; overflow: hidden; margin-top: 16px; display: none; }
+  .bar.show { display: block; }
+  .bar i { display: block; height: 100%; width: 35%; background: var(--brand); animation: slide 1.1s ease-in-out infinite; }
+  @keyframes slide { 0% { margin-left: -35%; } 100% { margin-left: 100%; } }
+
+  /* ---------- result ---------- */
+  .result { grid-column: 1 / -1; display: none; }
+  .result.show { display: block; animation: pop .35s ease-out; }
+  @keyframes pop { from { transform: scale(.96); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .verdict { display: flex; align-items: center; gap: 16px; padding: 18px 20px; border-radius: var(--r-sm); border: 2px solid; margin-bottom: 18px; }
+  .verdict .face { font-size: 44px; line-height: 1; }
+  .verdict h3 { margin: 0; font-size: 24px; font-weight: 900; }
+  .verdict p { margin: 2px 0 0; font-weight: 700; opacity: .9; }
+  .verdict.correct { border-color: var(--ok); background: rgba(56,217,150,.12); color: var(--ok); }
+  .verdict.close { border-color: var(--warn); background: rgba(255,200,87,.12); color: var(--warn); }
+  .verdict.incorrect, .verdict.no_speech { border-color: var(--bad); background: rgba(255,107,138,.12); color: var(--bad); }
+  .cmp { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 640px) { .cmp { grid-template-columns: 1fr; } }
+  .cmp .box { background: var(--panel-2); border-radius: var(--r-sm); padding: 14px 16px; }
+  .cmp .lbl { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 900; margin-bottom: 6px; }
+  .cmp .t { font-size: 28px; line-height: 1.35; word-break: break-word; }
+  .cmp .r { color: var(--muted); font-weight: 800; margin-top: 4px; word-break: break-word; }
+  .score { height: 12px; background: var(--panel-2); border-radius: 6px; overflow: hidden; margin: 14px 0 6px; }
+  .score i { display: block; height: 100%; width: 0; border-radius: 6px; transition: width .6s cubic-bezier(.2,.8,.2,1); }
+  .score i.correct { background: var(--ok); } .score i.close { background: var(--warn); } .score i.incorrect, .score i.no_speech { background: var(--bad); }
+  .score-lbl { display: flex; justify-content: space-between; font-weight: 800; color: var(--muted); font-size: 13px; }
+  .bigstars { text-align: center; font-size: 42px; letter-spacing: 6px; margin: 6px 0 14px; }
+  .bigstars .on { color: var(--warn); filter: drop-shadow(0 4px 10px rgba(255,200,87,.5)); animation: star .5s ease-out backwards; }
+  .bigstars .on:nth-child(2) { animation-delay: .12s; } .bigstars .on:nth-child(3) { animation-delay: .24s; }
+  .bigstars .off { opacity: .2; }
+  @keyframes star { from { transform: scale(0) rotate(-30deg); } to { transform: scale(1) rotate(0); } }
+
+  /* ---------- transcribe ---------- */
+  .drop {
+    border: 2px dashed var(--border); border-radius: var(--r); padding: 40px 20px; text-align: center; cursor: pointer;
+    transition: border-color .15s, background .15s; background: var(--panel);
+  }
+  .drop:hover, .drop.over { border-color: var(--brand); background: var(--panel-2); }
+  .drop .emoji { font-size: 40px; }
+  .drop strong { display: block; font-size: 18px; margin-top: 8px; font-weight: 900; }
+  .drop span { color: var(--muted); font-weight: 700; font-size: 14px; }
+  .file { margin-top: 14px; display: none; align-items: center; gap: 12px; flex-wrap: wrap; font-weight: 700; }
+  .file.show { display: flex; }
+  .out { display: none; margin-top: 18px; }
+  .out.show { display: block; animation: pop .3s ease-out; }
+  .lbl2 { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 900; margin-bottom: 6px; }
+  .tamil-text { font-size: 24px; line-height: 1.8; white-space: pre-wrap; word-break: break-word; margin: 0 0 16px; }
+  .roman-text { font-size: 17px; line-height: 1.7; margin: 0 0 18px; word-break: break-word; font-weight: 700; }
+  .stats { display: flex; flex-wrap: wrap; gap: 22px; padding-top: 14px; border-top: 1px solid var(--border); font-size: 12.5px; color: var(--muted); font-weight: 800; }
+  .stats b { display: block; color: var(--text); font-size: 15px; font-variant-numeric: tabular-nums; }
+  .tabs { display: inline-flex; background: var(--panel-2); border-radius: 999px; padding: 4px; gap: 4px; margin-bottom: 18px; }
+  .tabs button { border: 0; background: transparent; color: var(--muted); padding: 9px 18px; border-radius: 999px; font-weight: 900; }
+  .tabs button.active { background: var(--brand); color: #fff; }
+
+  /* ---------- home / progress ---------- */
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; margin-bottom: 26px; }
+  /* daily-task calendar */
+  .cal { padding: 20px 22px; max-width: 520px; }
+  .cal-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+  .cal-head .day { font-size: 22px; font-weight: 900; }
+  .cal-head .left, .cal-head .countdown { color: var(--muted); font-weight: 800; font-size: 13px; margin-left: 8px; font-variant-numeric: tabular-nums; }
+  .cal-head .left.ok { color: var(--ok); }
+  .cal-nav { display: flex; align-items: center; gap: 8px; font-weight: 900; font-size: 14px; }
+  .cal-nav button { border: 1px solid var(--border); background: var(--panel-2); color: var(--text); width: 32px; height: 32px; border-radius: 10px; font-weight: 900; font-size: 18px; line-height: 1; }
+  .cal-nav button:hover { border-color: var(--brand); }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; text-align: center; }
+  .cal-grid .dow { color: var(--muted); font-weight: 900; font-size: 12px; padding: 4px 0; }
+  .cal-grid .d { aspect-ratio: 1; width: 100%; max-width: 44px; margin: 0 auto; display: grid; place-items: center; border-radius: 50%; font-weight: 800; font-size: 14px; color: var(--muted); border: 2px solid transparent; }
+  .d.done { background: var(--ok); color: #05261a; border-color: var(--ok); }
+  .d.partial { border-color: var(--ok); color: var(--text); }
+  .d.missed { background: rgba(255,107,138,.16); color: var(--bad); }
+  .d.todo { border-color: var(--warn); border-style: dashed; color: var(--text); }
+  .d.planned { border-color: var(--border); border-style: dotted; }
+  .d.today { box-shadow: 0 0 0 3px var(--brand); color: var(--text); font-weight: 900; }
+  .cal-foot { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; margin-top: 14px; color: var(--muted); font-weight: 800; font-size: 13px; }
+  .cal-foot .legend { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; }
+  .cal-foot .legend .d { width: 14px; height: 14px; max-width: none; margin: 0 0 0 6px; }
+  .kpi { padding: 18px 20px; }
+  .kpi .n { font-size: 34px; font-weight: 900; line-height: 1.1; }
+  .kpi .l { color: var(--muted); font-weight: 800; font-size: 13px; }
+  .welcome { padding: 30px; background: linear-gradient(135deg, rgba(124,108,255,.28), rgba(91,224,216,.14)); border: 1px solid var(--border); margin-bottom: 22px; display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+  .welcome h2 { margin: 0 0 6px; font-size: 30px; font-weight: 900; }
+  .welcome p { margin: 0; color: var(--muted); font-weight: 700; }
+  .prog-row { display: grid; grid-template-columns: 200px 1fr 90px; gap: 14px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); font-weight: 800; }
+  .prog-row .track { height: 12px; background: var(--panel-2); border-radius: 6px; overflow: hidden; }
+  .prog-row .track i { display: block; height: 100%; background: var(--c); border-radius: 6px; }
+
+  .err { display: none; border: 2px solid var(--bad); background: rgba(255,107,138,.12); color: var(--bad); padding: 12px 16px; border-radius: var(--r-sm); font-weight: 800; margin-bottom: 18px; }
+  .err.show { display: block; }
+  .empty { color: var(--muted); font-weight: 700; font-style: italic; }
+
+  /* ---------- deep training ---------- */
+  .badge { margin-left: auto; background: var(--bad); color: #fff; font-size: 11px; font-weight: 900; border-radius: 999px; padding: 2px 8px; min-width: 20px; text-align: center; }
+  .tile.locked { cursor: pointer; opacity: .55; border-style: dashed; filter: grayscale(.6); }
+  .tile.locked:hover { opacity: .8; transform: none; border-color: var(--bad); }
+  .tile .lock { display: inline-block; margin-top: 8px; background: rgba(255,107,138,.15); color: var(--bad); border-radius: 999px; padding: 3px 10px; font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: .05em; }
+  .locked-card { text-align: center; padding: 40px 24px; border: 2px dashed var(--bad); }
+  .locked-card .word { font-size: 48px; margin-bottom: 8px; }
+  .stepper { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+  .stepper .s { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-weight: 900; font-size: 13px; background: var(--panel-2); color: var(--muted); border: 2px solid var(--border); transition: transform .15s; }
+  .stepper .s.done { background: var(--ok); color: #05261a; border-color: var(--ok); }
+  .stepper .s.cur { background: var(--brand); color: #fff; border-color: var(--brand); transform: scale(1.15); box-shadow: 0 0 0 5px rgba(124,108,255,.25); }
+  .stepper .line { width: 18px; height: 3px; background: var(--border); border-radius: 2px; }
+  .stepper .line.done { background: var(--ok); }
+  .kind { display: inline-block; background: var(--panel-2); border: 1px solid var(--border); border-radius: 999px; padding: 5px 14px; font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: 14px; }
+  .built { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+  .built span { background: rgba(56,217,150,.14); color: var(--ok); border-radius: 10px; padding: 4px 12px; font-weight: 700; font-size: 18px; }
+  .step-feedback { margin-top: 14px; padding: 12px 16px; border-radius: var(--r-sm); font-weight: 800; display: none; }
+  .step-feedback.show { display: block; animation: pop .3s ease-out; }
+  .step-feedback.pass { background: rgba(56,217,150,.14); color: var(--ok); }
+  .step-feedback.fail { background: rgba(255,107,138,.12); color: var(--bad); }
+  .step-feedback small { display: block; font-weight: 700; opacity: .85; margin-top: 4px; }
+  .tries { color: var(--muted); font-size: 12.5px; font-weight: 800; margin-top: 6px; }
+  .flag-cta { margin-top: 16px; padding: 16px 18px; border-radius: var(--r-sm); background: rgba(124,108,255,.14); border: 2px solid var(--brand); display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; font-weight: 800; }
+
+  /* ---------- confetti ---------- */
+  .confetti { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 50; }
+  .confetti i { position: absolute; top: -20px; width: 10px; height: 16px; border-radius: 3px; animation: fall 1.6s ease-in forwards; }
+  @keyframes fall { to { transform: translateY(110vh) rotate(720deg); opacity: 0; } }
+
+  /* ---------- sign in / account setup ---------- */
+  .auth-wrap { min-height: 100vh; display: grid; place-items: center; padding: 20px; background: radial-gradient(1000px 600px at 0% 0%, rgba(124,108,255,.28), transparent), radial-gradient(900px 500px at 100% 100%, rgba(91,224,216,.2), transparent), var(--bg); }
+  .auth { width: 100%; max-width: 440px; padding: 34px 30px; }
+  .auth .logo { width: 60px; height: 60px; font-size: 30px; border-radius: 18px; margin-bottom: 14px; }
+  .auth h2 { margin: 0 0 4px; font-size: 27px; font-weight: 900; }
+  .auth p { margin: 0 0 20px; color: var(--muted); font-weight: 700; }
+  .form { display: grid; gap: 12px; }
+  label.f { display: grid; gap: 5px; font-weight: 800; font-size: 13px; color: var(--muted); }
+  .in { width: 100%; border: 2px solid var(--border); background: var(--bg-2); border-radius: 12px; padding: 11px 13px; font: inherit; font-weight: 700; color: var(--text); outline: none; transition: border-color .15s; }
+  .in:focus { border-color: var(--brand); }
+  .in[readonly] { opacity: .7; }
+  .auth .btn { justify-content: center; }
+  .auth .foot { margin-top: 16px; text-align: center; color: var(--muted); font-weight: 700; font-size: 13.5px; }
+  .auth .foot a { color: var(--brand); }
+
+  /* ---------- who's signed in ---------- */
+  .me { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--panel); border: 1px solid var(--border); border-radius: 16px; margin-bottom: 8px; }
+  .me .av { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; font-weight: 900; color: #fff; background: linear-gradient(135deg, var(--brand), var(--brand-2)); flex: none; overflow: hidden; }
+  .me .av img { width: 100%; height: 100%; object-fit: cover; }
+  .me .who { flex: 1; min-width: 0; }
+  .me b { display: block; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .me small { color: var(--muted); font-weight: 700; font-size: 12px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .me button { border: 0; background: transparent; color: var(--muted); font-size: 18px; padding: 4px; border-radius: 8px; cursor: pointer; }
+  .me button:hover { color: var(--bad); background: var(--panel-2); }
+
+  /* ---------- today's task ---------- */
+  .task { display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: center; padding: 20px 22px; overflow: hidden; }
+  .task::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 6px; background: var(--c, var(--brand)); }
+  .task .kind { display: inline-block; background: var(--panel-2); border: 1px solid var(--border); border-radius: 999px; padding: 3px 10px; font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: 6px; }
+  .task .word { font-size: 36px; line-height: 1.25; font-weight: 700; }
+  .task .word.long { font-size: 24px; }
+  .task .rom { color: var(--muted); font-weight: 800; }
+  .task .note { margin-top: 6px; font-weight: 700; color: var(--muted); font-size: 14px; }
+  .task .side { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; text-align: right; }
+  .task.done { border-color: var(--ok); }
+  .task.over { opacity: .75; }
+  .countdown { font-variant-numeric: tabular-nums; font-weight: 900; font-size: 22px; display: inline-flex; align-items: center; gap: 8px; }
+  .countdown.soon { color: var(--bad); animation: blink 1s ease-in-out infinite; }
+  .countdown.over { color: var(--muted); animation: none; }
+  @keyframes blink { 50% { opacity: .55; } }
+  .countdown small { font-size: 12px; color: var(--muted); font-weight: 800; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 4px 11px; font-size: 12.5px; font-weight: 900; background: var(--panel-2); border: 1px solid var(--border); color: var(--muted); }
+  .chip.ok { background: rgba(56,217,150,.14); color: var(--ok); border-color: rgba(56,217,150,.35); }
+  .chip.warn { background: rgba(255,200,87,.14); color: var(--warn); border-color: rgba(255,200,87,.35); }
+  .chip.bad { background: rgba(255,107,138,.14); color: var(--bad); border-color: rgba(255,107,138,.35); }
+  .task-banner { padding: 18px 22px; border: 2px solid var(--brand); background: linear-gradient(135deg, rgba(124,108,255,.22), rgba(91,224,216,.1)); display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 22px; }
+  .task-banner .word { font-size: 26px; font-weight: 700; }
+  .task-banner .l { color: var(--muted); font-weight: 800; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; }
+  @media (max-width: 640px) { .task { grid-template-columns: 1fr; } .task .side { align-items: flex-start; text-align: left; } }
+
+  /* ---------- video lessons ---------- */
+  .grid.videos { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+  .vcard { padding: 0; display: flex; flex-direction: column; cursor: pointer; transition: transform .15s, box-shadow .15s; }
+  .vcard:hover { transform: translateY(-4px); box-shadow: 0 18px 40px rgba(0,0,0,.4); }
+  .vcard.done { border-color: var(--ok); }
+  .vthumb { position: relative; aspect-ratio: 16 / 9; background: #070a18; display: grid; place-items: center; }
+  .vthumb video { width: 100%; height: 100%; object-fit: cover; display: block; pointer-events: none; }
+  .vthumb .play { position: absolute; width: 64px; height: 64px; border-radius: 50%; background: rgba(255,255,255,.94); color: #1b1f3a; display: grid; place-items: center; font-size: 26px; padding-left: 5px; box-shadow: 0 10px 28px rgba(0,0,0,.45); transition: transform .15s; }
+  .vcard:hover .play { transform: scale(1.12); }
+  .vthumb .dur { position: absolute; right: 10px; bottom: 10px; background: rgba(0,0,0,.72); color: #fff; font-size: 12px; font-weight: 900; padding: 2px 8px; border-radius: 6px; font-variant-numeric: tabular-nums; }
+  .vthumb .seen { position: absolute; left: 0; bottom: 0; height: 5px; background: var(--ok); }
+  .vthumb .new { position: absolute; left: 10px; top: 10px; background: var(--bad); color: #fff; font-size: 11px; font-weight: 900; padding: 3px 9px; border-radius: 999px; text-transform: uppercase; letter-spacing: .05em; }
+  .vcard .vbody { padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+  .vcard h3 { margin: 0; font-size: 18px; font-weight: 900; line-height: 1.3; }
+  .vcard .desc { color: var(--muted); font-weight: 700; font-size: 14px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .vcard .foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: auto; padding-top: 4px; }
+  .player-bg { position: fixed; inset: 0; background: rgba(4,6,18,.94); z-index: 70; display: none; flex-direction: column; padding: 16px 20px 20px; backdrop-filter: blur(4px); }
+  .player-bg.show { display: flex; }
+  .player-top { display: flex; align-items: center; justify-content: space-between; gap: 14px; color: #fff; margin-bottom: 12px; }
+  .player-top h3 { margin: 0; font-size: 21px; font-weight: 900; }
+  .player-top p { margin: 2px 0 0; color: rgba(255,255,255,.72); font-weight: 700; font-size: 14px; }
+  .player-top button { border: 0; background: rgba(255,255,255,.14); color: #fff; width: 46px; height: 46px; border-radius: 50%; font-size: 21px; flex: none; cursor: pointer; }
+  .player-top button:hover { background: rgba(255,255,255,.28); }
+  .player-bg video { flex: 1; min-height: 0; width: 100%; max-height: calc(100vh - 110px); background: #000; border-radius: 16px; outline: none; }
+  .player-done { position: absolute; left: 50%; bottom: 34px; transform: translateX(-50%); background: var(--ok); color: #05261a; padding: 12px 22px; border-radius: 999px; font-weight: 900; box-shadow: 0 10px 30px rgba(0,0,0,.4); display: none; animation: pop .3s ease-out; }
+  .player-done.show { display: block; }
+
+  .seg { display: inline-flex; background: var(--panel-2); border-radius: 999px; padding: 4px; gap: 4px; }
+  .seg button { border: 0; background: transparent; color: var(--muted); padding: 8px 16px; border-radius: 999px; font-weight: 900; font-size: 14px; }
+  .seg button.active { background: var(--brand); color: #fff; }
+
+  /* ---------- the buddy character (Kili and friends) ---------- */
+  .kili { position: fixed; right: 22px; bottom: 16px; width: 150px; z-index: 45; user-select: none; -webkit-user-select: none; }
+  .kili-art { width: 100%; cursor: pointer; position: relative; z-index: 1; filter: drop-shadow(0 12px 18px rgba(0,0,0,.35)); animation: kili-bob 3s ease-in-out infinite; }
+  .kili-art .char { width: 100%; height: auto; display: block; }
+  .kili-name { position: absolute; left: 50%; bottom: -4px; transform: translateX(-50%); background: var(--panel); border: 1px solid var(--border); color: var(--muted); font-size: 11px; font-weight: 900; padding: 2px 10px; border-radius: 999px; letter-spacing: .04em; white-space: nowrap; }
+  .kili-mute { position: absolute; right: -4px; top: 6px; width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--border); background: var(--panel); color: var(--text); font-size: 14px; display: grid; place-items: center; cursor: pointer; box-shadow: var(--shadow); }
+  .kili-mute.off { opacity: .6; }
+  .kili-bubble { position: absolute; z-index: 3; right: 124px; bottom: 96px; width: max-content; max-width: min(360px, calc(100vw - 190px)); background: var(--bg-2); color: var(--text); border: 2px solid var(--brand); border-radius: 18px 18px 4px 18px; padding: 12px 36px 12px 16px; font-weight: 800; font-size: 15px; line-height: 1.45; box-shadow: var(--shadow); opacity: 0; transform: translateY(8px) scale(.96); transition: opacity .2s, transform .2s; pointer-events: none; }
+  .kili-bubble.show { opacity: 1; transform: none; pointer-events: auto; }
+  .kili-bubble::after { content: ""; position: absolute; right: -14px; bottom: 10px; border: 8px solid transparent; border-left-color: var(--brand); border-bottom-color: var(--brand); }
+  .kili-bubble .kw { font-size: 24px; display: inline-block; color: var(--brand); margin: 0 2px; }
+  .kili-bubble .kr { color: var(--muted); font-weight: 800; }
+  .kili-bubble .kt { display: block; margin-top: 4px; color: var(--muted); font-size: 13px; }
+  .kili-bubble.saying .kw { animation: kili-word .5s ease-in-out infinite alternate; }
+  .kb-close { position: absolute; top: 6px; right: 6px; width: 24px; height: 24px; border-radius: 50%; border: 0; background: var(--panel-2); color: var(--muted); font-size: 13px; font-weight: 900; display: grid; place-items: center; cursor: pointer; }
+  .kb-close:hover { background: var(--bad); color: #fff; }
+  .kili.joy .kili-bubble, .kili.happy .kili-bubble { border-color: var(--ok); } .kili.joy .kili-bubble::after, .kili.happy .kili-bubble::after { border-left-color: var(--ok); border-bottom-color: var(--ok); }
+  .kili.sad .kili-bubble { border-color: var(--bad); } .kili.sad .kili-bubble::after { border-left-color: var(--bad); border-bottom-color: var(--bad); }
+  /* shared parts: every character uses these class names */
+  .char .head { transform-origin: 110px 100px; transition: transform .35s; }
+  .char .arm { transition: transform .3s; }
+  .char .lid { transform-box: fill-box; transform-origin: 50% 0; transform: scaleY(0); }
+  .char .pupil { transition: transform .25s; }
+  .char .brow { opacity: 0; transition: opacity .2s, transform .3s; }
+  .char .cheek { transition: opacity .3s; opacity: .45; }
+  .char .m-smile, .char .m-frown { opacity: 0; transition: opacity .2s; }
+  .char .m-neutral { transition: opacity .2s; }
+  .char .sparkle { opacity: 0; transform-origin: center; transform-box: fill-box; }
+  .char .tail, .char .trunk, .char .bulb { transition: transform .3s; }
+  .kili .lid { animation: kili-blink 4.4s infinite; }
+  /* moods */
+  .kili.listen .head { transform: rotate(-12deg); }
+  .kili.listen .arm.r { transform: rotate(-55deg) translateY(-10px); }
+  .kili.listen .pupil { transform: scale(1.1); }
+  .kili.listen .kili-art { animation: kili-bob 1.2s ease-in-out infinite; }
+  .kili.think .head { transform: rotate(6deg); }
+  .kili.think .pupil { transform: translate(4px, -5px); }
+  .kili.think .brow { opacity: 1; } .kili.think .brow.r { transform: translateY(-5px); }
+  /* 1 star: feeling bad — head bends down, arms droop */
+  .kili.sad .head { transform: rotate(-9deg) translateY(12px); }
+  .kili.sad .brow { opacity: 1; } .kili.sad .brow.l { transform: rotate(14deg); } .kili.sad .brow.r { transform: rotate(-14deg); }
+  .kili.sad .pupil { transform: translateY(5px); }
+  .kili.sad .arm.l { transform: rotate(22deg) translateY(6px); } .kili.sad .arm.r { transform: rotate(-22deg) translateY(6px); }
+  .kili.sad .m-neutral { opacity: 0; } .kili.sad .m-frown { opacity: 1; }
+  .kili.sad .kili-art { animation: kili-sway 2.4s ease-in-out infinite; }
+  .kili.sad .tail { transform: rotate(35deg); }
+  /* 2 stars: smile, a little wiggle and a wave */
+  .kili.happy .m-neutral { opacity: 0; } .kili.happy .m-smile { opacity: 1; }
+  .kili.happy .cheek { opacity: 1; }
+  .kili.happy .pupil { transform: scale(1.15); }
+  .kili.happy .kili-art { animation: kili-wiggle .55s ease-in-out 4; }
+  .kili.happy .arm.l { animation: kili-wave-l .35s ease-in-out 6 alternate; } .kili.happy .arm.r { animation: kili-wave-r .35s ease-in-out 6 alternate; }
+  .kili.happy .tail { animation: kili-wag .3s ease-in-out 8 alternate; }
+  /* 3 stars: big smile, jumps from bottom to top, then dances with sparkles */
+  .kili.joy .m-neutral { opacity: 0; } .kili.joy .m-smile { opacity: 1; }
+  .kili.joy .cheek { opacity: 1; }
+  .kili.joy .pupil { transform: scale(1.25); }
+  .kili.joy .kili-art { animation: kili-jump 1s cubic-bezier(.34,1.3,.5,1) 2, kili-dance .4s ease-in-out 8 2s; }
+  .kili.joy .arm.l { animation: kili-arms-l .4s ease-in-out 12 alternate; } .kili.joy .arm.r { animation: kili-arms-r .4s ease-in-out 12 alternate; }
+  .kili.joy .head { animation: kili-headbop .4s ease-in-out 12 alternate 2s; }
+  .kili.joy .sparkle { animation: kili-sparkle 1s ease-in-out infinite; }
+  .kili.joy .sparkle:nth-child(2) { animation-delay: .25s; } .kili.joy .sparkle:nth-child(3) { animation-delay: .5s; } .kili.joy .sparkle:nth-child(4) { animation-delay: .75s; }
+  .kili.joy .tail { animation: kili-wag .22s ease-in-out 20 alternate; }
+  .kili.joy .trunk { transform: rotate(-35deg); }
+  .kili.joy .bulb { fill: #ff1744; animation: kili-glow .4s ease-in-out infinite alternate; }
+  @keyframes kili-bob { 50% { transform: translateY(-5px); } }
+  @keyframes kili-sway { 0%, 100% { transform: rotate(-2deg); } 50% { transform: rotate(2deg) translateY(3px); } }
+  @keyframes kili-wiggle { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-7deg) translateY(-4px); } 75% { transform: rotate(7deg) translateY(-4px); } }
+  @keyframes kili-jump { 0% { transform: translateY(0) scale(1, 1); } 15% { transform: translateY(6px) scale(1.12, .84); } 50% { transform: translateY(-110px) scale(.94, 1.1) rotate(-6deg); } 80% { transform: translateY(0) scale(1.1, .9); } 100% { transform: translateY(0) scale(1, 1); } }
+  @keyframes kili-dance { 0%, 100% { transform: rotate(-10deg) translateX(-8px); } 50% { transform: rotate(10deg) translateX(8px) translateY(-6px); } }
+  @keyframes kili-headbop { from { transform: rotate(-8deg); } to { transform: rotate(8deg); } }
+  @keyframes kili-wave-l { from { transform: rotate(0); } to { transform: rotate(-35deg); } }
+  @keyframes kili-wave-r { from { transform: rotate(0); } to { transform: rotate(35deg); } }
+  @keyframes kili-arms-l { from { transform: rotate(-70deg) translateY(-6px); } to { transform: rotate(-20deg); } }
+  @keyframes kili-arms-r { from { transform: rotate(70deg) translateY(-6px); } to { transform: rotate(20deg); } }
+  @keyframes kili-wag { from { transform: rotate(-25deg); } to { transform: rotate(25deg); } }
+  @keyframes kili-sparkle { 0%, 100% { opacity: 0; transform: scale(.4) rotate(0); } 50% { opacity: 1; transform: scale(1.2) rotate(40deg); } }
+  @keyframes kili-glow { from { opacity: .6; } to { opacity: 1; } }
+  @keyframes kili-blink { 0%, 90%, 100% { transform: scaleY(0); } 94% { transform: scaleY(1); } }
+  @keyframes kili-word { from { transform: scale(1); } to { transform: scale(1.14); } }
+  @media (max-width: 820px) { .kili { width: 104px; right: 10px; bottom: 10px; } .kili-bubble { right: 82px; bottom: 60px; font-size: 14px; max-width: calc(100vw - 120px); } .kili-name { display: none; } }
+  /* the Character page */
+  .grid.chars { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+  .char-card { text-align: center; cursor: pointer; padding: 18px 14px 16px; border: 2px solid var(--border); transition: transform .15s, border-color .15s, box-shadow .15s; }
+  .char-card:hover { transform: translateY(-4px); border-color: var(--brand); }
+  .char-card.chosen { border-color: var(--ok); box-shadow: 0 0 0 4px rgba(56,217,150,.18); }
+  .char-card .char { width: 130px; height: auto; margin: 0 auto 8px; display: block; filter: drop-shadow(0 8px 14px rgba(0,0,0,.3)); }
+  .char-card:hover .char { animation: kili-wiggle .6s ease-in-out infinite; }
+  .char-card h3 { margin: 4px 0 0; font-size: 19px; font-weight: 900; }
+  .char-card .tam { color: var(--muted); font-weight: 700; font-size: 14px; }
+  .char-card .tag { color: var(--muted); font-weight: 700; font-size: 13px; margin: 6px 0 12px; min-height: 38px; }
+
+  /* ---------- mobile ---------- */
+  .menu-btn { display: none; }
+  @media (max-width: 820px) {
+    .app { grid-template-columns: 1fr; }
+    .sidebar { position: fixed; z-index: 40; left: 0; top: 0; width: var(--sidebar); transform: translateX(-100%); transition: transform .2s; }
+    .sidebar.open { transform: none; box-shadow: 0 0 60px rgba(0,0,0,.5); }
+    .menu-btn { display: inline-flex; }
+    .main { padding: 18px 16px 60px; }
+    .status-pill .txt { display: none; }
+    .status-pill { padding: 8px 10px; }
+    .theme-btn span { display: none; }
+    .hero .word { font-size: 48px; }
+    .prog-row { grid-template-columns: 1fr; gap: 6px; }
+  }
+</style>
+</head>
+<body>
+<div id="authView" class="auth-wrap hidden"><div class="card auth" id="authCard"></div></div>
+
+<div class="app hidden" id="appView">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="logo tam">த</div>
+      <div><h1>Tamil Tutor</h1><small>learn · speak · shine</small></div>
+    </div>
+    <nav class="nav" id="nav">
+      <a href="#/home" data-route="home"><span class="ic">🏠</span> Home</a>
+      <a href="#/tasks" data-route="tasks"><span class="ic">📅</span> Today's Task <span class="badge hidden" id="taskBadge">0</span></a>
+      <a href="#/videos" data-route="videos"><span class="ic">🎬</span> Video Lessons <span class="badge hidden" id="videoBadge">0</span></a>
+      <a href="#/train" data-route="train"><span class="ic">🎯</span> Training</a>
+      <a href="#/deep" data-route="deep"><span class="ic">🧠</span> Deep Training <span class="badge hidden" id="deepBadge">0</span></a>
+      <a href="/arcade.html" class="arcade" target="_blank" rel="noopener" title="Speech Adventure — learning games (opens in a new tab)"><span class="ic">🕹️</span> Arcade Mode <span class="ext">↗</span></a>
+      <a href="#/transcribe" data-route="transcribe"><span class="ic">🎙️</span> Transcribe</a>
+      <a href="#/progress" data-route="progress"><span class="ic">⭐</span> My Progress</a>
+      <a href="#/character" data-route="character"><span class="ic">🎭</span> Character</a>
+      <a href="#/settings" data-route="settings"><span class="ic">⚙️</span> Settings</a>
+    </nav>
+    <div class="spacer"></div>
+    <div class="me" id="meCard">
+      <div class="av" id="meAv">?</div>
+      <div class="who"><b id="meName">…</b><small id="meSub"></small></div>
+      <button id="logoutBtn" title="Sign out">⏻</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <button class="theme-btn menu-btn" id="menuBtn" aria-label="Menu">☰</button>
+        <div class="crumbs" id="crumbs"></div>
+      </div>
+      <div class="topbar-right">
+        <span class="status-pill" id="statusPill"><span class="dot" id="dot"></span><span class="txt" id="statusText">checking…</span></span>
+        <button class="theme-btn" id="themeBtn" title="Toggle light / dark">🌙 <span>Dark</span></button>
+      </div>
+    </div>
+    <div class="err" id="err"></div>
+    <div id="view"></div>
+  </main>
+
+  <div class="kili" id="kili" aria-live="polite">
+    <div class="kili-bubble" id="kiliBubble"><span id="kiliText"></span><button class="kb-close" id="kiliClose" title="Hide message">✕</button></div>
+    <button class="kili-mute" id="kiliMute" title="Voice on / off">🔊</button>
+    <div class="kili-art" id="kiliArt"></div>
+    <div class="kili-name" id="kiliName"></div>
+  </div>
+</div>
+<div class="confetti" id="confetti"></div>
+<div class="player-bg" id="playerBg">
+  <div class="player-top"><div><h3 id="plTitle"></h3><p id="plSub"></p></div><button id="plClose" title="Close (Esc)">✕</button></div>
+  <video id="plVideo" controls playsinline></video>
+  <div class="player-done" id="plDone">🎉 Lesson finished! Your doctor can see it.</div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+  const escapeHtml = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const TARGET_SR = 16000;
+
+  /* =========================================================
+     state
+     ========================================================= */
+  const CATS = {
+    vowels:         { key: "vowels",         name: "Vowels",           tamil: "உயிர் எழுத்துக்கள்", emoji: "🔤", color: "var(--c-vowels)", sub: "The 12 sounds every word is built on", wide: false },
+    words:          { key: "words",          name: "Words",            tamil: "சொற்கள்",            emoji: "🧩", color: "var(--c-words)",  sub: "Family, body and everyday things",   wide: false, level: "easy" },
+    sentences:      { key: "sentences",      name: "Short Sentences",  tamil: "சிறு வாக்கியங்கள்",   emoji: "💬", color: "var(--c-short)",  sub: "Two or three words at a time",       wide: true,  level: "medium" },
+    long_sentences: { key: "long_sentences", name: "Simple Sentences", tamil: "எளிய வாக்கியங்கள்",   emoji: "📖", color: "var(--c-long)",   sub: "Four or five words — full thoughts", wide: true,  level: "hard" },
+  };
+  const CAT_ORDER = ["vowels", "words", "sentences", "long_sentences"];
+  const LEVELS = { easy: { name: "Easy", cls: "ok", emoji: "🟢" }, medium: { name: "Medium", cls: "warn", emoji: "🟡" }, hard: { name: "Hard", cls: "bad", emoji: "🔴" } };
+  const levelChip = (lv) => LEVELS[lv] ? `<span class="chip ${LEVELS[lv].cls}">${LEVELS[lv].emoji} ${LEVELS[lv].name}</span>` : "";
+  let lexicon = null;            // { vowels:[], words:[], sentences:[], long_sentences:[] }
+  let byId = {};
+  let health = null;
+
+  /* =========================================================
+     accounts, progress sync, today's tasks (the /api/* routes of this server)
+     ========================================================= */
+  const TOKEN_KEY = "tamiltutor.token", DOCTOR_TOKEN_KEY = "tamiltutor.doctor.token";
+  const PORTAL = "";   // same origin: the doctor portal is part of this server
+  let token = null, student = null, serverOffset = 0;
+  try { token = localStorage.getItem(TOKEN_KEY); } catch {}
+  function setToken(t) { token = t; try { t ? localStorage.setItem(TOKEN_KEY, t) : localStorage.removeItem(TOKEN_KEY); } catch {} }
+  async function portal(path, { method = "GET", json, auth = true } = {}) {
+    const headers = {};
+    if (auth && token) headers.Authorization = "Bearer " + token;
+    let body;
+    if (json !== undefined) { headers["Content-Type"] = "application/json"; body = JSON.stringify(json); }
+    let res;
+    try { res = await fetch(PORTAL + path, { method, headers, body }); }
+    catch { throw new Error("The server is not reachable. Is it running?"); }
+    const data = await res.json().catch(() => ({}));
+    if (res.status === 401 && auth) { signOut(false); throw new Error(data.detail || "Please sign in again."); }
+    if (!res.ok) throw new Error(typeof data.detail === "string" ? data.detail : `Request failed (${res.status})`);
+    return data;
+  }
+  function serverNow() { return Date.now() + serverOffset; }
+  // Fire-and-forget: progress is kept locally first, so a portal hiccup
+  // never blocks the child; the next attempt syncs again.
+  function pushAttempt(id, r, source) {
+    if (!student) return;
+    const e = byId[id];
+    portal("/api/student/attempts", { method: "POST", json: { entry_id: id, category: e?.cat || "", verdict: r.verdict, score_percent: r.score_percent, source } }).catch(() => {});
+  }
+  function pushDeep(id, s) {
+    if (!student) return;
+    portal(`/api/student/deep/${encodeURIComponent(id)}`, { method: "PUT", json: { status: s.status, wrong: s.wrong || 0, step: s.step || 0 } }).catch(() => {});
+  }
+
+  /* =========================================================
+     progress (localStorage, one bucket per signed-in student;
+     the doctor portal is the copy that follows the child between devices)
+     ========================================================= */
+  const pkey = () => "tamiltutor.progress" + (student ? "." + student.id : "");
+  function loadProgress() { try { return JSON.parse(localStorage.getItem(pkey()) || "{}"); } catch { return {}; } }
+  function saveProgress(p) { try { localStorage.setItem(pkey(), JSON.stringify(p)); } catch {} }
+  function starsFor(verdict) { return { correct: 3, close: 2, incorrect: 1, no_speech: 0 }[verdict] ?? 0; }
+  function recordAttempt(id, r, source = "training") {
+    const p = loadProgress();
+    const cur = p[id] || { best: 0, bestScore: 0, attempts: 0 };
+    const s = starsFor(r.verdict);
+    p[id] = { best: Math.max(cur.best, s), bestScore: Math.max(cur.bestScore, r.score_percent), attempts: cur.attempts + 1, last: r.verdict, at: Date.now() };
+    saveProgress(p);
+    // A task attempt is reported through the task endpoint instead, which
+    // also updates the item, so it is not sent twice.
+    if (source !== "task") pushAttempt(id, r, source);
+    return p[id];
+  }
+  function catProgress(key) {
+    const p = loadProgress(); const list = (lexicon && lexicon[key]) || [];
+    const done = list.filter((e) => (p[e.id]?.best || 0) >= 3).length;
+    const tried = list.filter((e) => p[e.id]).length;
+    return { total: list.length, done, tried, pct: list.length ? Math.round(done / list.length * 100) : 0 };
+  }
+  /* =========================================================
+     deep training state (localStorage)
+     ========================================================= */
+  const dkey = () => "tamiltutor.deep" + (student ? "." + student.id : "");
+  const WRONG_LIMIT = 3;        // consecutive misses in Training before a word is flagged
+  const SCAFFOLD_TRIES = 3;     // attempts at a piece step before "move on" is offered
+  function loadDeep() { try { return JSON.parse(localStorage.getItem(dkey()) || "{}"); } catch { return {}; } }
+  function saveDeep(d) { try { localStorage.setItem(dkey(), JSON.stringify(d)); } catch {} }
+  // status: "normal" (never flagged) | "deep_required" (locked in Training until
+  // the drill is finished) | "deep_done" (finished once; stays in Deep Training
+  // so it can be trained again any time, without locking).
+  function deepState(id) {
+    const d = loadDeep();
+    return d[id] || { wrong: 0, status: "normal", step: 0, tries: {} };
+  }
+  function setDeepState(id, s) {
+    const d = loadDeep(); const before = d[id] || {}; d[id] = s; saveDeep(d);
+    // The doctor sees which words are locked; only tell the portal when that
+    // changes, not on every step of a drill.
+    if (before.status !== s.status || (before.wrong || 0) !== (s.wrong || 0)) pushDeep(id, s);
+    return s;
+  }
+  function isLocked(id) { return deepState(id).status === "deep_required"; }
+  function deepList() {   // locked words: what the sidebar badge counts
+    const d = loadDeep();
+    return Object.entries(d).filter(([id, s]) => byId[id] && s.status === "deep_required").map(([id, s]) => ({ ...byId[id], deep: s }));
+  }
+  function deepAllList() {  // every word that has ever been flagged: the Deep Training boxes
+    const d = loadDeep();
+    return Object.entries(d).filter(([id, s]) => byId[id] && (s.status === "deep_required" || s.status === "deep_done")).map(([id, s]) => ({ ...byId[id], deep: s }));
+  }
+  // Called after every Training attempt. Returns true if this attempt tipped
+  // the word into deep training.
+  function noteTrainingResult(id, verdict) {
+    const s = deepState(id);
+    if (verdict === "incorrect") {
+      s.wrong = (s.wrong || 0) + 1;
+      if (s.wrong >= WRONG_LIMIT) {
+        s.status = "deep_required"; s.step = 0; s.tries = {};
+        setDeepState(id, s); updateDeepBadge(); return true;
+      }
+    } else if (verdict === "correct") {
+      s.wrong = 0;
+    }
+    // "close" and "no_speech" change nothing: nearly-right is not wrong, and
+    // silence is usually the microphone.
+    setDeepState(id, s); return false;
+  }
+  function updateDeepBadge() {
+    const n = deepList().length; const b = $("deepBadge");
+    b.textContent = n; b.classList.toggle("hidden", n === 0);
+  }
+
+  function starHtml(n, cls = "stars") {
+    return `<div class="${cls}">` + [1,2,3].map((i) => `<span class="${i <= n ? "on" : "off"}">★</span>`).join("") + `</div>`;
+  }
+
+  /* =========================================================
+     theme
+     ========================================================= */
+  const TKEY = "tamiltutor.theme";
+  function applyTheme(t) {
+    document.documentElement.setAttribute("data-theme", t);
+    $("themeBtn").innerHTML = t === "dark" ? "🌙 <span>Dark</span>" : "☀️ <span>Light</span>";
+    try { localStorage.setItem(TKEY, t); } catch {}
+  }
+  $("themeBtn").onclick = () => applyTheme(document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark");
+  try { applyTheme(localStorage.getItem(TKEY) || "dark"); } catch { applyTheme("dark"); }
+
+  $("menuBtn").onclick = () => $("sidebar").classList.toggle("open");
+  document.addEventListener("click", (e) => {
+    if (window.innerWidth <= 820 && !$("sidebar").contains(e.target) && e.target !== $("menuBtn")) $("sidebar").classList.remove("open");
+  });
+
+  /* =========================================================
+     api + status
+     ========================================================= */
+  async function checkHealth() {
+    try {
+      health = await (await fetch("/health")).json();
+      if (health.load_error) setStatus("bad", "model unavailable", health.load_error);
+      else if (health.model_loaded) setStatus("ok", "ready to listen");
+      else { setStatus("warm", "warming up…"); setTimeout(checkHealth, 5000); }
+    } catch { setStatus("bad", "server offline"); }
+  }
+  function setStatus(cls, msg, title) { $("dot").className = "dot " + cls; $("statusText").textContent = msg; $("statusText").title = title || ""; }
+
+  async function loadLexicon() {
+    const lex = await (await fetch("/lexicon")).json();
+    lexicon = lex; byId = {};
+    for (const k of CAT_ORDER) for (const e of (lex[k] || [])) { byId[e.id] = e; e.cat = k; }
+  }
+  function showError(msg) { $("err").textContent = msg; $("err").classList.add("show"); window.scrollTo({ top: 0, behavior: "smooth" }); }
+  function hideError() { $("err").classList.remove("show"); }
+
+  /* =========================================================
+     router
+     ========================================================= */
+  function route() {
+    const h = location.hash.replace(/^#\/?/, "");
+    const parts = h.split("/").filter(Boolean);
+    return { page: parts[0] || "home", a: parts[1], b: parts[2] };
+  }
+  window.addEventListener("hashchange", render);
+
+  function setCrumbs(list) {
+    $("crumbs").innerHTML = list.map((c, i) => (i ? `<span class="sep">›</span>` : "") + (c.href ? `<a href="${c.href}">${c.label}</a>` : `<span>${c.label}</span>`)).join("");
+  }
+  function setActiveNav(page) {
+    for (const a of document.querySelectorAll("#nav a")) a.classList.toggle("active", a.dataset.route === page);
+  }
+
+  async function render() {
+    hideError(); stopPronunciation(); stopRecordingIfAny(); clearInterval(tickTimer); closePlayer(false);
+    $("sidebar").classList.remove("open");
+    const r = route();
+    if (!student) return renderAuth(r);
+    if (r.page === "login" || r.page === "activate") { location.hash = "#/home"; return; }
+    if (!lexicon) { try { await loadLexicon(); } catch { $("view").innerHTML = `<div class="card">Could not load the lesson list. Is the server running?</div>`; return; } }
+    setActiveNav(r.page);
+    updateDeepBadge(); refreshTaskBadge(); refreshVideoBadge();
+    stopKili(); kiliLast = null;
+    kiliMood("idle", r.page === "home" ? `Vanakkam${student ? ", " + escapeHtml(student.first_name) : ""}! ${character().emoji}` : KILI_HINTS[r.page] || "");
+    const views = { home: viewHome, train: viewTrain, deep: viewDeep, tasks: viewTasks, videos: viewVideos, transcribe: viewTranscribe, progress: viewProgress, character: viewCharacter, settings: viewSettings };
+    (views[r.page] || viewHome)(r);
+    window.scrollTo({ top: 0 });
+  }
+
+  /* =========================================================
+     sign in / create account (doctor portal)
+     ========================================================= */
+  function showAuth() { $("appView").classList.add("hidden"); $("authView").classList.remove("hidden"); }
+  function showApp() { $("authView").classList.add("hidden"); $("appView").classList.remove("hidden"); }
+  function signOut(callServer = true) {
+    if (callServer && token) portal("/api/auth/logout", { method: "POST" }).catch(() => {});
+    setToken(null); student = null; tasksCache = null; videosCache = null; closePlayer();
+    location.hash = "#/login"; renderAuth(route());
+  }
+  $("logoutBtn").onclick = () => { if (confirm("Sign out?")) signOut(); };
+
+  async function renderAuth(r) {
+    showAuth();
+    if (r.page === "activate" && r.a) return renderActivate(r.a);
+    let role = r.a === "doctor" ? "doctor" : "child";
+    $("authCard").innerHTML = `
+      <div class="logo tam">த</div>
+      <h2>Vanakkam! 👋</h2>
+      <p id="aLead"></p>
+      <div class="err" id="aErr"></div>
+      <form class="form" id="aForm">
+        <label class="f">I am a
+          <select class="in" id="aRole">
+            <option value="child">🧒 Child — practise Tamil</option>
+            <option value="doctor">🩺 Doctor — manage students</option>
+          </select></label>
+        <label class="f"><span id="aUserLabel">Username or email</span> <input class="in" id="aUser" autocomplete="username" required /></label>
+        <label class="f">Password <input class="in" id="aPass" type="password" autocomplete="current-password" required placeholder="••••••••" /></label>
+        <button class="btn big" id="aBtn" type="submit">Let's go →</button>
+      </form>
+      <div class="foot" id="aFoot"></div>`;
+    const applyRole = () => {
+      $("aRole").value = role;
+      $("aLead").textContent = role === "doctor" ? "Sign in to see your students, their progress, and set today's task." : "Sign in to practise your Tamil and see today's task.";
+      $("aUserLabel").textContent = role === "doctor" ? "Email" : "Username or email";
+      $("aUser").placeholder = role === "doctor" ? "doctor@clinic.org" : "e.g. ravi or ravi@example.com";
+      $("aUser").type = role === "doctor" ? "email" : "text";
+      $("aBtn").textContent = role === "doctor" ? "Open the dashboard →" : "Let's go →";
+      $("aFoot").textContent = role === "doctor" ? "Children sign in here too — pick “Child” above." : "New here? Use the account link your doctor emailed you.";
+    };
+    applyRole(); $("aUser").focus();
+    $("aRole").onchange = () => { role = $("aRole").value; applyRole(); history.replaceState(null, "", role === "doctor" ? "#/login/doctor" : "#/login"); $("aUser").focus(); };
+    $("aForm").onsubmit = async (e) => {
+      e.preventDefault(); $("aErr").classList.remove("show"); $("aBtn").disabled = true;
+      try {
+        const res = await portal("/api/auth/login", { method: "POST", auth: false, json: { role, identifier: $("aUser").value.trim(), password: $("aPass").value } });
+        if (role === "doctor") {
+          // The doctor's dashboard is its own page; hand it the session and go there.
+          try { localStorage.setItem(DOCTOR_TOKEN_KEY, res.token); } catch {}
+          location.replace("/doctor.html");
+          return;
+        }
+        setToken(res.token); await enterApp(res.student);
+      } catch (err) { $("aErr").textContent = err.message; $("aErr").classList.add("show"); }
+      finally { const b = $("aBtn"); if (b) b.disabled = false; }
+    };
+  }
+
+  async function renderActivate(inviteToken) {
+    $("authCard").innerHTML = `<div class="logo tam">த</div><h2>One moment…</h2><p>Checking your invitation.</p>`;
+    let info;
+    try { info = await portal(`/api/invites/${encodeURIComponent(inviteToken)}`, { auth: false }); }
+    catch (err) {
+      $("authCard").innerHTML = `<div class="logo tam">த</div><h2>Hmm 🤔</h2><p>${err.message}</p><a class="btn big" href="#/login">Go to sign in</a>`;
+      return;
+    }
+    if (!info.valid) {
+      $("authCard").innerHTML = `<div class="logo tam">த</div><h2>This link has expired</h2><p>${info.reason}</p><a class="btn big" href="#/login">Go to sign in</a>`;
+      return;
+    }
+    $("authCard").innerHTML = `
+      <div class="logo tam">த</div>
+      <h2>Hi ${info.first_name}! 🎉</h2>
+      <p>Create your Tamil Tutor account. You will sign in with these from now on.</p>
+      <div class="err" id="aErr"></div>
+      <form class="form" id="aForm">
+        <label class="f">Email <input class="in" value="${info.email}" readonly /></label>
+        <label class="f">Username <input class="in" id="aUser" autocomplete="username" required minlength="3" maxlength="64" value="${info.email}" placeholder="your email, or a name you like" /></label>
+        <label class="f">Password <input class="in" id="aPass" type="password" autocomplete="new-password" required minlength="6" placeholder="at least 6 characters" /></label>
+        <label class="f">Confirm password <input class="in" id="aPass2" type="password" autocomplete="new-password" required minlength="6" placeholder="the same again" /></label>
+        <button class="btn big ok" id="aBtn" type="submit">Create my account ✓</button>
+      </form>
+      <div class="foot">Already have an account? <a href="#/login">Sign in</a></div>`;
+    $("aForm").onsubmit = async (e) => {
+      e.preventDefault(); $("aErr").classList.remove("show");
+      if ($("aPass").value !== $("aPass2").value) { $("aErr").textContent = "The two passwords do not match."; $("aErr").classList.add("show"); return; }
+      $("aBtn").disabled = true;
+      try {
+        const res = await portal(`/api/invites/${encodeURIComponent(inviteToken)}/activate`, { method: "POST", auth: false,
+          json: { username: $("aUser").value.trim(), password: $("aPass").value, confirm_password: $("aPass2").value } });
+        setToken(res.token); confetti(); chime(); await enterApp(res.student);
+      } catch (err) { $("aErr").textContent = err.message; $("aErr").classList.add("show"); $("aBtn").disabled = false; }
+    };
+  }
+
+  // After sign-in: pull the account's progress from the portal (it follows
+  // the child between devices), merging anything this browser already had.
+  async function enterApp(s) {
+    student = s;
+    $("meName").textContent = s.first_name || s.name;
+    $("meSub").textContent = s.username ? "@" + s.username : s.email;
+    $("meAv").innerHTML = s.photo_url ? `<img src="${PORTAL}${s.photo_url}" alt="" />` : ((s.first_name || "?")[0] || "?").toUpperCase();
+    try { await hydrateProgress(); } catch {}
+    showApp();
+    if (!location.hash || /^#\/?(login|activate)/.test(location.hash)) location.hash = "#/home";
+    render();
+  }
+  async function hydrateProgress() {
+    let remote = await portal("/api/student/progress");
+    let local = loadProgress(), localDeep = loadDeep();
+    if (!Object.keys(local).length && !Object.keys(remote.items || {}).length) {
+      // First account on this device: adopt the stars earned before accounts
+      // existed, once, so they are not handed to the next child who signs in.
+      try {
+        local = JSON.parse(localStorage.getItem("tamiltutor.progress") || "{}"); localDeep = JSON.parse(localStorage.getItem("tamiltutor.deep") || "{}");
+        localStorage.removeItem("tamiltutor.progress"); localStorage.removeItem("tamiltutor.deep");
+      } catch {}
+    }
+    if (Object.keys(local).length || Object.keys(localDeep).length) {
+      for (const [id, p] of Object.entries(local)) p.category = byId[id]?.cat || p.category || "";
+      remote = await portal("/api/student/progress/sync", { method: "POST", json: { items: local, deep: localDeep } });
+    }
+    const items = {}; for (const [id, p] of Object.entries(remote.items || {})) items[id] = { best: p.best, bestScore: p.bestScore, attempts: p.attempts, last: p.last, at: Date.parse(p.at) || Date.now() };
+    const deep = {}; for (const [id, d] of Object.entries(remote.deep || {})) deep[id] = { ...(localDeep[id] || {}), status: d.status, wrong: d.wrong, step: localDeep[id]?.step ?? d.step ?? 0, tries: localDeep[id]?.tries || {} };
+    saveProgress(items); saveDeep(deep);
+  }
+  async function boot() {
+    await checkHealth();
+    try { await loadLexicon(); } catch {}
+    if (token) {
+      try { const me = await portal("/api/student/me"); serverOffset = new Date(me.now) - Date.now(); await enterApp(me.student); return; }
+      catch { /* fall through to sign-in */ }
+    }
+    // A doctor who is already signed in belongs on the dashboard, not here.
+    let doctorToken = null; try { doctorToken = localStorage.getItem(DOCTOR_TOKEN_KEY); } catch {}
+    if (doctorToken && !/^#\/?(activate|login)/.test(location.hash)) {
+      try {
+        const r = await fetch("/api/auth/me", { headers: { Authorization: "Bearer " + doctorToken } });
+        if (r.ok && (await r.json()).role === "doctor") { location.replace("/doctor.html"); return; }
+      } catch {}
+    }
+    if (!/^#\/?(login|activate)/.test(location.hash)) location.hash = "#/login";   // hashchange renders
+    else render();
+  }
+
+  /* =========================================================
+     views
+     ========================================================= */
+  function viewHome() {
+    setCrumbs([{ label: "Home" }]);
+    const p = loadProgress();
+    const mastered = Object.values(p).filter((x) => x.best >= 3).length;
+    const total = CAT_ORDER.reduce((n, k) => n + (lexicon[k] || []).length, 0);
+    const stars = Object.values(p).reduce((n, x) => n + (x.best || 0), 0);
+    const attempts = Object.values(p).reduce((n, x) => n + (x.attempts || 0), 0);
+    const next = nextSuggestion();
+    $("view").innerHTML = `
+      <div class="card welcome">
+        <div>
+          <h2>Vanakkam${student ? ", " + student.first_name : ""}! 👋</h2>
+          <p>Hear it, say it, and collect stars. Ready to practise some Tamil?</p>
+        </div>
+        <a class="btn big" href="${next ? `#/train/${next.cat}/${next.id}` : "#/train"}">▶ ${next ? "Continue: " + next.tamil : "Start training"}</a>
+      </div>
+      <div id="homeTask"></div>
+      <div id="homeVideos"></div>
+      <div class="kpis">
+        <div class="card kpi"><div class="n">⭐ ${stars}</div><div class="l">stars collected</div></div>
+        <div class="card kpi"><div class="n">${mastered}<span style="font-size:18px;color:var(--muted)"> / ${total}</span></div><div class="l">mastered</div></div>
+        <div class="card kpi"><div class="n">${attempts}</div><div class="l">attempts made</div></div>
+        <a class="card kpi" href="#/deep" style="display:block"><div class="n">🧠 ${deepList().length}</div><div class="l">in deep training</div></a>
+      </div>
+      <div id="homeCalendar"></div>`;
+    homeTaskBanner();
+    homeVideoBanner();
+    homeCalendar();
+  }
+
+  async function homeVideoBanner() {
+    let videos; try { videos = (await loadVideos()).videos; } catch { return; }
+    const box = $("homeVideos"); if (!box) return;
+    const todo = videos.filter((v) => v.my.status !== "done");
+    if (!todo.length) return;
+    const v = todo[0];
+    box.innerHTML = `
+      <a class="card task-banner" href="#/videos" style="border-color:var(--brand-2);background:linear-gradient(135deg, rgba(91,224,216,.18), rgba(124,108,255,.12))">
+        <div><div class="l">🎬 Video lesson${todo.length > 1 ? `s · ${todo.length} to watch` : ""}</div>
+          <div class="word">${escapeHtml(v.title)}</div><div style="color:var(--muted);font-weight:800">${v.my.status === "started" ? `you are ${v.my.watched_pct}% through` : "from your doctor"}${v.duration ? ` · ${fmtDur(v.duration)}` : ""}</div></div>
+        <div class="chip">▶ Watch now</div>
+      </a>`;
+  }
+
+  async function homeTaskBanner() {
+    let tasks; try { tasks = (await loadTasks()).tasks; } catch { return; }
+    const box = $("homeTask"); if (!box) return;
+    const open = tasks.filter((t) => !t.expired);
+    if (!open.length) return;
+    const todo = open.filter((t) => t.my.status !== "done");
+    const t = todo[0] || open[0];
+    box.innerHTML = `
+      <a class="card task-banner" href="#/tasks">
+        <div><div class="l">📅 Today's task${open.length > 1 ? ` · ${open.length} tasks` : ""}${t.level_name ? ` · ${t.level_name}` : ""}</div>
+          <div class="word tam">${t.tamil}</div><div style="color:var(--muted);font-weight:800">${t.roman}</div></div>
+        <div style="text-align:right">
+          ${todo.length ? `<div class="countdown ${cdClass(t.due_at)}" data-due="${t.due_at}">⏳ ${countdown(t.due_at)}</div><div style="color:var(--muted);font-weight:800;font-size:13px">${todo.length} to finish · tap to start</div>`
+                        : `<div class="chip ok">✓ All done for today!</div>`}
+        </div>
+      </a>`;
+    startTicks();
+  }
+
+  // Daily-task calendar: one circle per day, green when every task due that
+  // day was finished (like LeetCode's daily-challenge calendar).
+  let calMonth = null, calData = null;
+  const dayKey = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  async function homeCalendar() {
+    const box = $("homeCalendar"); if (!box) return;
+    let data;
+    try { data = await portal("/api/student/calendar"); } catch (err) { box.innerHTML = `<div class="card"><div class="empty">${escapeHtml(err.message)}</div></div>`; return; }
+    serverOffset = new Date(data.now) - Date.now();
+    const byDay = {};
+    for (const t of data.tasks) {
+      const k = dayKey(new Date(t.due_at)); const d = byDay[k] || (byDay[k] = { total: 0, done: 0, open: [] });
+      d.total++; if (t.status === "done") d.done++; else if (!t.expired) d.open.push(t);
+    }
+    calData = byDay;
+    const n = new Date(serverNow()); if (!calMonth) calMonth = new Date(n.getFullYear(), n.getMonth(), 1);
+    renderCalendar();
+  }
+  function renderCalendar() {
+    const box = $("homeCalendar"); if (!box || !calData) return;
+    const today = new Date(serverNow()), tk = dayKey(today);
+    const y = calMonth.getFullYear(), m = calMonth.getMonth();
+    const firstDow = new Date(y, m, 1).getDay(), days = new Date(y, m + 1, 0).getDate();
+    const monthName = calMonth.toLocaleDateString(undefined, { month: "long", year: "numeric" });
+    // streak: consecutive fully-done days ending today (or yesterday, if today is still open)
+    let streak = 0; const cur = new Date(today); cur.setHours(0, 0, 0, 0);
+    const tinfo = calData[tk]; if (!tinfo || tinfo.done < tinfo.total) cur.setDate(cur.getDate() - 1);
+    for (;;) { const i = calData[dayKey(cur)]; if (!i || !i.total || i.done < i.total) break; streak++; cur.setDate(cur.getDate() - 1); }
+    let doneThisMonth = 0;
+    const cells = [];
+    for (let i = 0; i < firstDow; i++) cells.push(`<div></div>`);
+    for (let d = 1; d <= days; d++) {
+      const k = dayKey(new Date(y, m, d)); const info = calData[k];
+      let cls = "none", title = "no task";
+      if (info) {
+        title = `${info.done} of ${info.total} done`;
+        if (info.done === info.total) { cls = "done"; doneThisMonth++; }
+        else if (info.done > 0) cls = "partial";
+        else if (k < tk) { cls = "missed"; title = "missed"; }
+        else if (k === tk) cls = "todo";
+        else cls = "planned";
+      }
+      const isToday = k === tk;
+      cells.push(`<a class="d ${cls} ${isToday ? "today" : ""}" href="${isToday && info ? "#/tasks" : "javascript:void(0)"}" title="${title}">${d}</a>`);
+    }
+    const nextDue = tinfo && tinfo.open.length ? tinfo.open.map((t) => t.due_at).sort()[0] : null;
+    const status = nextDue ? `<span class="countdown left ${cdClass(nextDue)}" data-due="${nextDue}">⏳ ${countdown(nextDue)}</span>`
+                 : tinfo && tinfo.total ? `<span class="left ok">✓ done for today</span>` : `<span class="left">no task today</span>`;
+    box.innerHTML = `
+      <div class="card cal">
+        <div class="cal-head">
+          <div><span class="day">Day ${today.getDate()}</span> ${status}</div>
+          <div class="cal-nav"><button id="calPrev" title="Previous month">‹</button><span>${escapeHtml(monthName)}</span><button id="calNext" title="Next month">›</button></div>
+        </div>
+        <div class="cal-grid">${["S", "M", "T", "W", "T", "F", "S"].map((x) => `<div class="dow">${x}</div>`).join("")}${cells.join("")}</div>
+        <div class="cal-foot"><span>🔥 ${streak}-day streak</span><span>✓ ${doneThisMonth} day${doneThisMonth === 1 ? "" : "s"} done in ${escapeHtml(calMonth.toLocaleDateString(undefined, { month: "short" }))}</span>
+          <span class="legend"><i class="d done"></i> done <i class="d partial"></i> partly <i class="d missed"></i> missed</span></div>
+      </div>`;
+    $("calPrev").onclick = () => { calMonth = new Date(y, m - 1, 1); renderCalendar(); };
+    $("calNext").onclick = () => { calMonth = new Date(y, m + 1, 1); renderCalendar(); };
+    if (nextDue) startTicks();
+  }
+
+  function nextSuggestion() {
+    const p = loadProgress();
+    for (const k of CAT_ORDER) for (const e of lexicon[k] || []) if ((p[e.id]?.best || 0) < 3) return e;
+    return null;
+  }
+
+  function catCard(key) {
+    const c = CATS[key]; const pr = catProgress(key);
+    return `
+      <div class="card cat" data-cat="${key}" style="--c:${c.color}">
+        <div>
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px"><div class="emoji">${c.emoji}</div>${levelChip(c.level)}</div>
+          <h3>${c.name}</h3>
+          <div class="sub tam">${c.tamil}</div>
+          <div class="sub">${c.sub}</div>
+        </div>
+        <div class="foot">
+          <span class="pill">${pr.done} / ${pr.total} mastered</span>
+          <div class="ring" style="--c:${c.color};--p:${pr.pct}"><span>${pr.pct}%</span></div>
+        </div>
+      </div>`;
+  }
+  function bindCatCards() {
+    for (const el of document.querySelectorAll(".cat")) el.onclick = () => (location.hash = `#/train/${el.dataset.cat}`);
+  }
+
+  function viewTrain(r) {
+    if (r.a && r.b) return viewPractice(r.a, r.b);
+    if (r.a && CATS[r.a]) return viewCategory(r.a);
+    setCrumbs([{ label: "Home", href: "#/home" }, { label: "Training" }]);
+    $("view").innerHTML = `
+      <h2 class="title">Training 🎯</h2>
+      <p class="lead">Four steps, from single sounds to full sentences. Earn three stars on each to master it.</p>
+      <div class="grid cats">${CAT_ORDER.map(catCard).join("")}</div>`;
+    bindCatCards();
+  }
+
+  function viewCategory(key) {
+    const c = CATS[key]; const list = lexicon[key] || []; const p = loadProgress();
+    setCrumbs([{ label: "Home", href: "#/home" }, { label: "Training", href: "#/train" }, { label: c.name }]);
+    $("view").innerHTML = `
+      <h2 class="title">${c.emoji} ${c.name} <span class="tam" style="color:var(--muted);font-weight:600;font-size:20px">· ${c.tamil}</span></h2>
+      <p class="lead">${c.sub}. Tap one to practise it.</p>
+      <div class="grid items ${c.wide ? "wide" : ""}">
+        ${list.map((e) => { const locked = isLocked(e.id); return `
+          <div class="card tile ${c.wide ? "wide" : ""} ${locked ? "locked" : ""}" data-id="${e.id}" data-locked="${locked}" style="--c:${c.color}"
+               title="${locked ? "Deep training required — tap to start" : ""}">
+            <div class="big tam">${e.tamil}</div>
+            <div class="rom">${e.roman}</div>
+            ${key === "vowels" ? "" : `<div class="mean">${e.meaning}</div>`}
+            ${locked ? `<div class="lock">🧠 Deep training required</div>` : starHtml(p[e.id]?.best || 0)}
+          </div>`; }).join("")}
+      </div>`;
+    for (const el of document.querySelectorAll(".tile")) {
+      el.onclick = () => (location.hash = el.dataset.locked === "true" ? `#/deep/${el.dataset.id}` : `#/train/${key}/${el.dataset.id}`);
+    }
+  }
+
+  /* ---------- practice ---------- */
+  let practiceClip = null;
+  let currentEntry = null;
+
+  function viewPractice(key, id) {
+    const c = CATS[key]; const e = byId[id];
+    if (!c || !e) { location.hash = "#/train"; return; }
+    currentEntry = e; practiceClip = null;
+    if (isLocked(id)) {
+      setCrumbs([{ label: "Home", href: "#/home" }, { label: "Training", href: "#/train" }, { label: c.name, href: `#/train/${key}` }, { label: e.roman }]);
+      $("view").innerHTML = `
+        <div class="card locked-card">
+          <div class="word tam">${e.tamil}</div>
+          <div class="kind">🧠 Deep training required</div>
+          <p style="color:var(--muted);font-weight:700;max-width:520px;margin:6px auto 18px">
+            This one was tricky ${WRONG_LIMIT} times in a row. Let's break it into small pieces and build it back up — then it unlocks here again.</p>
+          <a class="btn big" href="#/deep/${id}">🧠 Start deep training</a>
+          <div style="margin-top:14px"><a class="btn alt" href="#/train/${key}">← Back to ${c.name}</a></div>
+        </div>`;
+      return;
+    }
+    const list = lexicon[key]; const idx = list.findIndex((x) => x.id === id);
+    const prev = list[idx - 1], next = list[idx + 1];
+    const p = loadProgress()[id];
+    const isSentence = e.category === "sentence"; const isLong = isSentence && e.tamil.split(/\s+/).length >= 4;
+    setCrumbs([{ label: "Home", href: "#/home" }, { label: "Training", href: "#/train" }, { label: c.name, href: `#/train/${key}` }, { label: e.roman }]);
+    $("view").innerHTML = `
+      <div class="practice">
+        <div class="card hero" style="--c:${c.color}">
+          <div class="word tam ${isSentence ? "sentence" : ""} ${isLong ? "long" : ""}">${e.tamil}</div>
+          <div class="say">say: <b>${e.roman}</b></div>
+          <div class="mean">${key === "vowels" ? e.meaning : `means “${e.meaning}”`}</div>
+          <div class="listen">
+            <button class="btn" id="playBtn">🔊 Pronounce</button>
+            <button class="btn alt" id="playSlowBtn">🐢 Slow</button>
+          </div>
+          <div style="margin-top:16px" id="heroProg">${heroProgress(p)}</div>
+        </div>
+
+        <div class="card rec-card">
+          <h4>Your turn 🎤</h4>
+          <div class="hint" id="pHint">Tap the mic, say it clearly, tap again to stop</div>
+          <button class="mic" id="pMic" title="Start recording">🎙️</button>
+          <div class="timer" id="pTimer">00:00</div>
+          <div class="meter"><i id="pLevel"></i></div>
+          <div class="clip" id="pClipPane">
+            <audio id="pPlayer" controls></audio>
+            <div class="actions">
+              <button class="btn ok" id="pSubmit">✓ Check my pronunciation</button>
+              <button class="btn alt" id="pClear">Discard</button>
+            </div>
+          </div>
+          <div class="bar" id="pBar"><i></i></div>
+        </div>
+
+        <div class="card result" id="pOut">
+          <div class="verdict" id="pVerdict"><span class="face" id="pFace"></span><div><h3 id="pTitle"></h3><p id="pDetail"></p></div></div>
+          <div id="pStars" class="bigstars"></div>
+          <div class="cmp">
+            <div class="box"><div class="lbl">You were asked to say</div><div class="t tam" id="pExpT"></div><div class="r" id="pExpR"></div></div>
+            <div class="box"><div class="lbl">What I heard</div><div class="t tam" id="pGotT"></div><div class="r" id="pGotR"></div></div>
+          </div>
+          <div class="score"><i id="pScoreBar"></i></div>
+          <div class="score-lbl"><span>match score</span><span id="pScoreNum"></span></div>
+          <div class="flag-cta hidden" id="pFlag">
+            <span>🧠 Tricky one! Let's break it into small pieces and build it back up.</span>
+            <a class="btn" href="#/deep/${id}">Start deep training →</a>
+          </div>
+          <div class="actions">
+            <button class="btn alt" id="pAgain">🔁 Try again</button>
+            ${next ? `<a class="btn" href="#/train/${key}/${next.id}">Next: <span class="tam">${next.tamil}</span> →</a>` : `<a class="btn" href="#/train/${key}">🎉 Back to ${c.name}</a>`}
+          </div>
+        </div>
+      </div>
+      <div class="actions" style="justify-content:space-between;margin-top:18px">
+        ${prev ? `<a class="btn alt" href="#/train/${key}/${prev.id}">← <span class="tam">${prev.tamil}</span></a>` : `<span></span>`}
+        ${next ? `<a class="btn alt" href="#/train/${key}/${next.id}"><span class="tam">${next.tamil}</span> →</a>` : `<span></span>`}
+      </div>`;
+
+    $("playBtn").onclick = () => pronounce(e, "normal");
+    $("playSlowBtn").onclick = () => pronounce(e, "slow");
+    $("pMic").onclick = () => toggleRec("practice");
+    $("pClear").onclick = () => { clearPracticeClip(); $("pOut").classList.remove("show"); };
+    $("pAgain").onclick = () => { clearPracticeClip(); $("pOut").classList.remove("show"); $("pMic").focus(); };
+    $("pSubmit").onclick = submitPractice;
+  }
+
+  function heroProgress(p) {
+    return starHtml(p?.best || 0, "stars") +
+      `<div style="color:var(--muted);font-size:13px;font-weight:800">${p ? `best ${p.bestScore}% · ${p.attempts} attempt${p.attempts === 1 ? "" : "s"}` : "not tried yet"}</div>`;
+  }
+
+  function setPracticeClip(blob, name, seconds) {
+    practiceClip = { blob, name, seconds };
+    $("pPlayer").src = URL.createObjectURL(blob);
+    $("pClipPane").classList.add("show");
+    $("pHint").textContent = "Nice! Listen back, then check it — or record again.";
+  }
+  function clearPracticeClip() {
+    practiceClip = null;
+    const pane = $("pClipPane"); if (!pane) return;
+    pane.classList.remove("show"); $("pPlayer").removeAttribute("src");
+    $("pTimer").textContent = "00:00"; $("pHint").textContent = "Tap the mic, say it clearly, tap again to stop";
+  }
+
+  async function submitPractice() {
+    if (!practiceClip || !currentEntry) return;
+    hideError();
+    $("pSubmit").disabled = true; $("pBar").classList.add("show");
+    kiliMood("think", "Let me check… 🤔", true);
+    const form = new FormData();
+    form.append("file", practiceClip.blob, practiceClip.name);
+    form.append("entry_id", currentEntry.id);
+    try {
+      const res = await fetch("/practice", { method: "POST", body: form });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body.detail || `Request failed (${res.status})`);
+      const prog = recordAttempt(currentEntry.id, body);
+      const flagged = noteTrainingResult(currentEntry.id, body.verdict);
+      renderResult(body, prog);
+      kiliReact(body, { tamil: currentEntry.tamil, roman: currentEntry.roman, url: `/pronounce/${encodeURIComponent(currentEntry.id)}?speed=slow` });
+      const cta = $("pFlag"); if (cta) cta.classList.toggle("hidden", !flagged);
+      if (flagged) { $("pAgain").classList.add("hidden"); const nx = document.querySelector("#pOut .actions a.btn"); if (nx) nx.classList.add("hidden"); }
+    } catch (err) {
+      showError(err.message || "Checking failed.");
+    } finally {
+      $("pBar").classList.remove("show"); $("pSubmit").disabled = false;
+    }
+  }
+
+  const VERDICTS = {
+    correct:   { face: "🌟", title: "Perfect!" },
+    close:     { face: "😊", title: "Almost there!" },
+    incorrect: { face: "🤔", title: "Not quite — try again" },
+    no_speech: { face: "🤫", title: "I didn't hear anything" },
+  };
+  function renderResult(r, prog) {
+    const v = VERDICTS[r.verdict] || VERDICTS.incorrect;
+    $("pVerdict").className = "verdict " + r.verdict;
+    $("pFace").textContent = v.face; $("pTitle").textContent = v.title; $("pDetail").textContent = r.detail;
+    $("pStars").innerHTML = [1,2,3].map((i) => `<span class="${i <= starsFor(r.verdict) ? "on" : "off"}">★</span>`).join("");
+    $("pExpT").textContent = r.expected.tamil; $("pExpR").textContent = r.expected.roman;
+    $("pGotT").textContent = r.heard.tamil || "—"; $("pGotR").textContent = r.heard.roman || "(nothing)";
+    $("pScoreNum").textContent = r.score_percent + "%";
+    const bar = $("pScoreBar"); bar.className = r.verdict; bar.style.width = "0%";
+    $("pOut").classList.add("show");
+    const hp = $("heroProg"); if (hp) hp.innerHTML = heroProgress(prog);
+    requestAnimationFrame(() => (bar.style.width = r.score_percent + "%"));
+    $("pOut").scrollIntoView({ behavior: "smooth", block: "nearest" });
+    if (r.verdict === "correct") { confetti(); chime(); }
+  }
+
+  /* =========================================================
+     today's task (set by the doctor, due by a deadline)
+     ========================================================= */
+  let tasksCache = null, tasksAt = 0, tickTimer = 0;
+  async function loadTasks(force = false) {
+    if (!force && tasksCache && Date.now() - tasksAt < 30000) return tasksCache;
+    tasksCache = await portal("/api/student/tasks"); tasksAt = Date.now();
+    serverOffset = new Date(tasksCache.now) - Date.now();
+    updateTaskBadge(tasksCache.tasks);
+    return tasksCache;
+  }
+  function updateTaskBadge(tasks) {
+    const n = tasks.filter((t) => !t.expired && t.my.status !== "done").length;
+    const b = $("taskBadge"); b.textContent = n; b.classList.toggle("hidden", n === 0);
+  }
+  function refreshTaskBadge() { loadTasks().catch(() => {}); }
+  function countdown(due) {
+    const ms = new Date(due) - serverNow();
+    if (ms <= 0) return "Time's up";
+    const h = Math.floor(ms / 3600000), m = Math.floor(ms % 3600000 / 60000), s = Math.floor(ms % 60000 / 1000);
+    if (h >= 24) return `${Math.floor(h / 24)}d ${h % 24}h left`;
+    return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  }
+  function cdClass(due) { const ms = new Date(due) - serverNow(); return ms <= 0 ? "over" : ms < 15 * 60000 ? "soon" : ""; }
+  function startTicks() {
+    clearInterval(tickTimer);
+    tickTimer = setInterval(() => {
+      for (const el of document.querySelectorAll(".countdown[data-due]")) {
+        const was = el.classList.contains("over");
+        el.className = "countdown " + cdClass(el.dataset.due); el.textContent = "⏳ " + countdown(el.dataset.due);
+        if (!was && cdClass(el.dataset.due) === "over" && route().page === "tasks") { tasksCache = null; render(); }
+      }
+    }, 1000);
+  }
+  const TASK_COLOR = { vowels: "var(--c-vowels)", words: "var(--c-words)", sentences: "var(--c-short)", long_sentences: "var(--c-long)" };
+  function fmtDue(iso) { const d = new Date(iso); const today = new Date().toDateString() === d.toDateString(); return (today ? "today " : d.toLocaleDateString(undefined, { day: "numeric", month: "short" }) + " ") + d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" }); }
+
+  async function viewTasks(r) {
+    if (r.a) return viewTaskPractice(r.a);
+    setCrumbs([{ label: "Home", href: "#/home" }, { label: "Today's Task" }]);
+    $("view").innerHTML = `<h2 class="title">Today's Task 📅</h2><p class="lead">Loading…</p>`;
+    let tasks;
+    try { tasks = (await loadTasks(true)).tasks; } catch (err) { $("view").innerHTML = `<h2 class="title">Today's Task 📅</h2><div class="card"><div class="empty">${err.message}</div></div>`; return; }
+    const open = tasks.filter((t) => !t.expired), over = tasks.filter((t) => t.expired);
+    const card = (t) => { const my = t.my; const done = my.status === "done"; const isLong = t.tamil.split(/\s+/).length >= 4;
+      return `
+      <div class="card task ${done ? "done" : ""} ${t.expired ? "over" : ""}" style="--c:${TASK_COLOR[t.kind] || "var(--brand)"}">
+        <div>
+          <span class="kind">${t.kind_name}</span> ${levelChip(t.level)}
+          <div class="word tam ${isLong ? "long" : ""}">${t.tamil}</div>
+          <div class="rom">say: ${t.roman}${t.meaning ? ` · “${t.meaning}”` : ""}</div>
+          ${t.note ? `<div class="note">📝 ${t.note}</div>` : ""}
+          <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            ${done ? `<span class="chip ok">✓ Done · ${VERDICTS[my.best_verdict]?.title || ""} ${my.best_score}%</span>`
+                   : my.status === "attempted" ? `<span class="chip warn">${VERDICTS[my.best_verdict]?.face || "🤔"} best ${my.best_score}% · keep trying!</span>`
+                   : t.expired ? `<span class="chip bad">✗ Missed</span>` : `<span class="chip">⏳ Not started</span>`}
+            ${my.attempts ? `<span class="chip">${my.attempts} ${my.attempts === 1 ? "try" : "tries"}</span>` : ""}
+          </div>
+        </div>
+        <div class="side">
+          <div class="countdown ${cdClass(t.due_at)}" data-due="${t.due_at}">⏳ ${countdown(t.due_at)}</div>
+          <div style="color:var(--muted);font-weight:800;font-size:13px">finish by ${fmtDue(t.due_at)}</div>
+          ${t.expired ? "" : `<a class="btn ${done ? "alt" : "big"}" href="#/tasks/${t.id}">${done ? "🔁 Practise again" : "🎤 Start"}</a>`}
+        </div>
+      </div>`; };
+    $("view").innerHTML = `
+      <h2 class="title">Today's Task 📅</h2>
+      <p class="lead">Your doctor set ${open.length ? `${open.length === 1 ? "this" : "these"} for today. Finish before the clock runs out!` : "nothing for right now. Check back later!"}</p>
+      ${open.length ? `<div class="grid" style="grid-template-columns:1fr">${open.map(card).join("")}</div>`
+                    : `<div class="card" style="text-align:center;padding:40px"><div style="font-size:44px">🌤️</div><h3 style="margin:8px 0 4px">No task right now</h3><p class="empty" style="margin:0">When your doctor sets one, it appears here with a timer.</p></div>`}
+      ${over.length ? `<h3 style="margin:26px 0 12px;font-weight:900;color:var(--muted)">Earlier</h3><div class="grid" style="grid-template-columns:1fr">${over.map(card).join("")}</div>` : ""}`;
+    startTicks();
+  }
+
+  let currentTask = null;
+  async function viewTaskPractice(id) {
+    let tasks; try { tasks = (await loadTasks()).tasks; } catch (err) { showError(err.message); return; }
+    const t = tasks.find((x) => String(x.id) === String(id));
+    if (!t) { location.hash = "#/tasks"; return; }
+    if (t.expired) { location.hash = "#/tasks"; return; }
+    currentTask = t; practiceClip = null; currentEntry = t.entry_id ? byId[t.entry_id] : null;
+    const isSentence = t.tamil.includes(" "), isLong = t.tamil.split(/\s+/).length >= 4;
+    setCrumbs([{ label: "Home", href: "#/home" }, { label: "Today's Task", href: "#/tasks" }, { label: t.roman || t.tamil }]);
+    $("view").innerHTML = `
+      <div class="practice">
+        <div class="card hero" style="--c:${TASK_COLOR[t.kind] || "var(--brand)"}">
+          <div class="kind">📅 Today's task · ${t.kind_name}${t.level_name ? ` · ${t.level_name}` : ""}</div>
+          <div class="word tam ${isSentence ? "sentence" : ""} ${isLong ? "long" : ""}">${t.tamil}</div>
+          <div class="say">say: <b>${t.roman || "—"}</b></div>
+          <div class="mean">${t.meaning ? `means “${t.meaning}”` : ""}</div>
+          ${t.note ? `<div class="mean" style="margin-top:6px">📝 ${t.note}</div>` : ""}
+          <div class="listen">
+            <button class="btn" id="playBtn">🔊 Pronounce</button>
+            <button class="btn alt" id="playSlowBtn">🐢 Slow</button>
+          </div>
+          <div style="margin-top:16px"><div class="countdown ${cdClass(t.due_at)}" data-due="${t.due_at}">⏳ ${countdown(t.due_at)}</div>
+            <div style="color:var(--muted);font-size:13px;font-weight:800" id="taskStatus">${t.my.status === "done" ? `✓ already done · best ${t.my.best_score}%` : t.my.attempts ? `${t.my.attempts} ${t.my.attempts === 1 ? "try" : "tries"} so far` : "finish by " + fmtDue(t.due_at)}</div></div>
+        </div>
+
+        <div class="card rec-card">
+          <h4>Your turn 🎤</h4>
+          <div class="hint" id="pHint">Tap the mic, say it clearly, tap again to stop</div>
+          <button class="mic" id="pMic" title="Start recording">🎙️</button>
+          <div class="timer" id="pTimer">00:00</div>
+          <div class="meter"><i id="pLevel"></i></div>
+          <div class="clip" id="pClipPane">
+            <audio id="pPlayer" controls></audio>
+            <div class="actions">
+              <button class="btn ok" id="pSubmit">✓ Check my pronunciation</button>
+              <button class="btn alt" id="pClear">Discard</button>
+            </div>
+          </div>
+          <div class="bar" id="pBar"><i></i></div>
+        </div>
+
+        <div class="card result" id="pOut">
+          <div class="verdict" id="pVerdict"><span class="face" id="pFace"></span><div><h3 id="pTitle"></h3><p id="pDetail"></p></div></div>
+          <div id="pStars" class="bigstars"></div>
+          <div class="cmp">
+            <div class="box"><div class="lbl">You were asked to say</div><div class="t tam" id="pExpT"></div><div class="r" id="pExpR"></div></div>
+            <div class="box"><div class="lbl">What I heard</div><div class="t tam" id="pGotT"></div><div class="r" id="pGotR"></div></div>
+          </div>
+          <div class="score"><i id="pScoreBar"></i></div>
+          <div class="score-lbl"><span>match score</span><span id="pScoreNum"></span></div>
+          <div class="flag-cta hidden" id="pFlag"></div>
+          <div class="actions">
+            <button class="btn alt" id="pAgain">🔁 Try again</button>
+            <a class="btn" href="#/tasks" id="pDone">Back to today's task</a>
+          </div>
+        </div>
+      </div>`;
+    const say = (speed, btn) => t.entry_id ? playFrom(`/pronounce/${encodeURIComponent(t.entry_id)}?speed=${speed}`, t.tamil, speed, btn) : pronounceText(t.tamil, speed, btn);
+    $("playBtn").onclick = () => say("normal", $("playBtn"));
+    $("playSlowBtn").onclick = () => say("slow", $("playSlowBtn"));
+    $("pMic").onclick = () => toggleRec("practice");
+    $("pClear").onclick = () => { clearPracticeClip(); $("pOut").classList.remove("show"); };
+    $("pAgain").onclick = () => { clearPracticeClip(); $("pOut").classList.remove("show"); $("pMic").focus(); };
+    $("pSubmit").onclick = submitTask;
+    startTicks();
+  }
+
+  async function submitTask() {
+    if (!practiceClip || !currentTask) return;
+    hideError();
+    $("pSubmit").disabled = true; $("pBar").classList.add("show");
+    kiliMood("think", "Let me check… 🤔", true);
+    const t = currentTask;
+    const form = new FormData();
+    form.append("file", practiceClip.blob, practiceClip.name);
+    if (t.entry_id) form.append("entry_id", t.entry_id); else form.append("text", t.tamil);
+    try {
+      const res = await fetch(t.entry_id ? "/practice" : "/check", { method: "POST", body: form });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body.detail || `Request failed (${res.status})`);
+      // Training progress counts too, if the task is a lexicon item.
+      const prog = t.entry_id ? recordAttempt(t.entry_id, body, "task") : null;
+      renderResult(body, prog);
+      kiliReact(body, { tamil: t.tamil, roman: t.roman, url: t.entry_id ? `/pronounce/${encodeURIComponent(t.entry_id)}?speed=slow` : `/say?text=${encodeURIComponent(t.tamil)}&speed=slow` });
+      const rep = await portal(`/api/student/tasks/${t.id}/attempts`, { method: "POST", json: { verdict: body.verdict, score_percent: body.score_percent } });
+      t.my = rep.my; tasksCache = null;
+      const st = $("taskStatus"); if (st) st.textContent = rep.my.status === "done" ? `✓ task done · best ${rep.my.best_score}%` : `${rep.my.attempts} ${rep.my.attempts === 1 ? "try" : "tries"} so far`;
+      if (rep.my.status === "done") { $("pDone").textContent = "🎉 Done! Back to today's task"; $("pDone").classList.add("ok"); }
+      refreshTaskBadge();
+    } catch (err) {
+      showError(err.message || "Checking failed.");
+    } finally {
+      $("pBar").classList.remove("show"); const sb = $("pSubmit"); if (sb) sb.disabled = false;
+    }
+  }
+
+  /* =========================================================
+     video lessons (uploaded by the doctor; watching is reported back)
+     ========================================================= */
+  let videosCache = null, videosAt = 0;
+  async function loadVideos(force = false) {
+    if (!force && videosCache && Date.now() - videosAt < 30000) return videosCache;
+    videosCache = await portal("/api/student/videos"); videosAt = Date.now();
+    updateVideoBadge(videosCache.videos);
+    return videosCache;
+  }
+  function updateVideoBadge(videos) {
+    const n = videos.filter((v) => v.my.status !== "done").length;
+    const b = $("videoBadge"); b.textContent = n; b.classList.toggle("hidden", n === 0);
+  }
+  function refreshVideoBadge() { loadVideos().catch(() => {}); }
+  function fmtDur(sec) { if (!sec || sec <= 0) return ""; sec = Math.round(sec); const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), s = sec % 60; return (h ? `${h}:${String(m).padStart(2, "0")}` : `${m}`) + `:${String(s).padStart(2, "0")}`; }
+  const videoSrc = (v) => `${PORTAL}${v.url}?t=${encodeURIComponent(token)}`;
+
+  async function viewVideos() {
+    setCrumbs([{ label: "Home", href: "#/home" }, { label: "Video Lessons" }]);
+    $("view").innerHTML = `<h2 class="title">Video Lessons 🎬</h2><p class="lead">Loading…</p>`;
+    let videos;
+    try { videos = (await loadVideos(true)).videos; } catch (err) { $("view").innerHTML = `<h2 class="title">Video Lessons 🎬</h2><div class="card"><div class="empty">${escapeHtml(err.message)}</div></div>`; return; }
+    const todo = videos.filter((v) => v.my.status !== "done").length;
+    const card = (v) => { const my = v.my; const done = my.status === "done";
+      return `
+      <div class="card vcard ${done ? "done" : ""}" data-video="${v.id}">
+        <div class="vthumb">
+          <video preload="metadata" muted src="${escapeHtml(videoSrc(v))}#t=0.5"></video>
+          <div class="play">▶</div>
+          ${my.status === "new" ? `<span class="new">New</span>` : ""}
+          ${v.duration ? `<span class="dur">${fmtDur(v.duration)}</span>` : ""}
+          ${my.watched_pct ? `<i class="seen" style="width:${my.watched_pct}%"></i>` : ""}
+        </div>
+        <div class="vbody">
+          <h3>${escapeHtml(v.title)}</h3>
+          ${v.description ? `<div class="desc">${escapeHtml(v.description)}</div>` : ""}
+          <div class="foot">
+            ${done ? `<span class="chip ok">✓ Watched</span>` : my.status === "started" ? `<span class="chip warn">▶ ${my.watched_pct}% watched</span>` : `<span class="chip">▶ Not watched yet</span>`}
+            <span style="color:var(--muted);font-weight:800;font-size:12.5px">${fmtDue(v.created_at)}</span>
+          </div>
+        </div>
+      </div>`; };
+    $("view").innerHTML = `
+      <h2 class="title">Video Lessons 🎬</h2>
+      <p class="lead">${videos.length ? (todo ? `Your doctor shared ${videos.length === 1 ? "a lesson" : `${videos.length} lessons`}. ${todo} still to watch — tap one to play it.` : "You have watched every lesson. Tap any to watch it again.") : "Nothing here yet. When your doctor uploads a lesson, it appears here."}</p>
+      ${videos.length ? `<div class="grid videos">${videos.map(card).join("")}</div>`
+                      : `<div class="card" style="text-align:center;padding:40px"><div style="font-size:44px">🎬</div><h3 style="margin:8px 0 4px">No video lessons yet</h3><p class="empty" style="margin:0">Check back later!</p></div>`}`;
+    const byIdV = Object.fromEntries(videos.map((v) => [v.id, v]));
+    for (const el of document.querySelectorAll("[data-video]")) el.onclick = () => openPlayer(byIdV[el.dataset.video]);
+  }
+
+  // The player fills nearly the whole window. Progress goes to the doctor
+  // portal every few seconds and on close; the furthest point reached is what
+  // counts, so a child scrubbing back never loses credit.
+  let playing = null, plTimer = 0, plLastSent = 0, plReported = false;
+  function reportProgress(ended = false) {
+    if (!playing || !student) return;
+    const el = $("plVideo");
+    const body = { position: el.currentTime || 0, ended };
+    if (isFinite(el.duration) && el.duration > 0) body.duration = el.duration;
+    const v = playing;
+    portal(`/api/student/videos/${v.id}/progress`, { method: "POST", json: body }).then((r) => {
+      v.my = r.my; videosAt = 0;   // v is the cached object, so the list is already up to date
+      if (videosCache) updateVideoBadge(videosCache.videos);
+      if (r.my.status === "done" && !plReported) { plReported = true; $("plDone").classList.add("show"); confetti(); setTimeout(() => $("plDone").classList.remove("show"), 4000); }
+    }).catch(() => {});
+  }
+  function openPlayer(v) {
+    if (!v) return;
+    playing = v; plReported = v.my.status === "done";
+    $("plTitle").textContent = v.title; $("plSub").textContent = v.description || (v.duration ? fmtDur(v.duration) : "");
+    $("plDone").classList.remove("show");
+    const el = $("plVideo"); el.src = videoSrc(v);
+    el.onloadedmetadata = () => { if (v.my.status === "started" && v.my.position > 3 && v.my.position < el.duration - 3) el.currentTime = v.my.position; };
+    el.ontimeupdate = () => { if (Date.now() - plLastSent > 5000) { plLastSent = Date.now(); reportProgress(); } };
+    el.onended = () => reportProgress(true);
+    el.onpause = () => { if (!el.ended) reportProgress(); };
+    $("playerBg").classList.add("show"); document.body.style.overflow = "hidden";
+    el.play().catch(() => {});
+  }
+  function closePlayer(rerender = true) {
+    if (!$("playerBg").classList.contains("show")) return;
+    const el = $("plVideo");
+    if (playing) reportProgress(el.ended);
+    el.pause(); el.onended = el.ontimeupdate = el.onpause = el.onloadedmetadata = null; el.removeAttribute("src"); el.load();
+    playing = null; $("playerBg").classList.remove("show"); document.body.style.overflow = "";
+    if (rerender && (route().page === "videos" || route().page === "home")) render();   // show the new watched state
+  }
+  $("plClose").onclick = () => closePlayer();
+  $("playerBg").onclick = (e) => { if (e.target === $("playerBg")) closePlayer(); };
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") closePlayer(); });
+
+  /* =========================================================
+     deep training views
+     ========================================================= */
+  function viewDeep(r) {
+    if (r.a) return viewDrill(r.a);
+    setCrumbs([{ label: "Home", href: "#/home" }, { label: "Deep Training" }]);
+    const words = deepAllList();
+    const tile = (e) => { const c = CATS[e.cat]; return `
+      <div class="card tile ${c.wide ? "wide" : ""}" data-id="${e.id}" style="--c:${c.color}">
+        <div class="big tam" style="${c.wide ? "" : "font-size:36px"}">${e.tamil}</div>
+        <div class="rom">${e.roman}</div>
+        ${e.cat === "vowels" ? "" : `<div class="mean">${e.meaning}</div>`}
+      </div>`; };
+    $("view").innerHTML = `
+      <h2 class="title">Deep Training 🧠</h2>
+      <p class="lead">Words that were tricky three times in a row. Tap one to build it up piece by piece — as many times as you like.</p>
+      ${words.length ? `<div class="grid items">${words.map(tile).join("")}</div>`
+                     : `<div class="card" style="text-align:center;padding:40px"><div style="font-size:44px">🌈</div><h3 style="margin:8px 0 4px">Nothing here!</h3><p class="empty" style="margin:0">That means you're doing great. Words come here only after three misses in a row.</p></div>`}`;
+    for (const el of document.querySelectorAll(".tile")) el.onclick = () => (location.hash = `#/deep/${el.dataset.id}`);
+  }
+
+  let drill = null;  // { entry, steps, id }
+  async function viewDrill(id) {
+    const e = byId[id]; if (!e) { location.hash = "#/deep"; return; }
+    const c = CATS[e.cat];
+    setCrumbs([{ label: "Home", href: "#/home" }, { label: "Deep Training", href: "#/deep" }, { label: e.roman }]);
+    $("view").innerHTML = `<div class="card" style="text-align:center;padding:40px;color:var(--muted);font-weight:800">Preparing the pieces…</div>`;
+    let steps;
+    try { steps = (await (await fetch(`/decompose/${encodeURIComponent(id)}`)).json()).steps; }
+    catch { showError("Could not load the deep-training steps."); return; }
+    drill = { entry: e, steps, id };
+    // Warm the browser cache so every Pronounce tap is instant.
+    for (const s of steps) fetch(`/say?text=${encodeURIComponent(s.text)}&speed=${s.speed}`).catch(() => {});
+
+    // Training again never changes the lock: a locked word stays locked until
+    // the drill is finished; a finished word stays unlocked while re-training.
+    const st = deepState(id);
+    st.step = Math.min(st.step || 0, steps.length - 1);
+    st.tries = st.tries || {};
+    setDeepState(id, st);
+    renderDrillStep(c);
+  }
+
+  function renderDrillStep(c) {
+    const { entry: e, steps, id } = drill; const st = deepState(id); const i = st.step; const s = steps[i];
+    const tries = (st.tries || {})[i] || 0;
+    const isSentence = s.text.includes(" ");
+    const builtSoFar = steps.slice(0, i).filter((x) => x.kind === "piece" || x.kind === "word").map((x) => x.text);
+    $("view").innerHTML = `
+      <div class="stepper">${steps.map((x, k) => `${k ? `<span class="line ${k <= i ? "done" : ""}"></span>` : ""}<span class="s ${k < i ? "done" : k === i ? "cur" : ""}" title="${x.label}">${k < i ? "✓" : k + 1}</span>`).join("")}</div>
+      <div class="practice">
+        <div class="card hero" style="--c:${c.color}">
+          <div class="kind">${s.label} · ${i + 1} of ${steps.length}</div>
+          ${(s.kind === "slow" || s.kind === "full") && builtSoFar.length ? `<div class="built">${builtSoFar.map((t) => `<span class="tam">${t}</span>`).join("")}</div>` : ""}
+          <div class="word tam ${isSentence ? "sentence" : ""} ${s.text.split(/\s+/).length >= 4 ? "long" : ""}">${s.text}</div>
+          <div class="say">say: <b>${s.roman}</b></div>
+          <div class="mean">${s.kind === "slow" ? "nice and slow — stretch every sound" : s.kind === "full" ? `the whole ${isSentence ? "sentence" : "word"}, like you'd say it normally` : s.kind === "buildup" ? "the first words together" : isSentence ? "one word of the sentence" : "one piece of the word"}</div>
+          <div class="listen">
+            <button class="btn" id="playBtn">🔊 ${s.kind === "slow" ? "Hear it slowly" : "Pronounce"}</button>
+            ${s.kind !== "slow" ? `<button class="btn alt" id="playSlowBtn">🐢 Slow</button>` : ""}
+          </div>
+        </div>
+        <div class="card rec-card">
+          <h4>Your turn 🎤</h4>
+          <div class="hint" id="pHint">Tap the mic, say it, tap again to stop</div>
+          <button class="mic" id="pMic" title="Start recording">🎙️</button>
+          <div class="timer" id="pTimer">00:00</div>
+          <div class="meter"><i id="pLevel"></i></div>
+          <div class="clip" id="pClipPane">
+            <audio id="pPlayer" controls></audio>
+            <div class="actions">
+              <button class="btn ok" id="pSubmit">✓ Check</button>
+              <button class="btn alt" id="pClear">Discard</button>
+            </div>
+          </div>
+          <div class="bar" id="pBar"><i></i></div>
+          <div class="step-feedback" id="dFeedback"></div>
+          <div class="tries" id="dTries">${tries ? `${tries} ${tries === 1 ? "try" : "tries"} so far` : ""}</div>
+          <div class="actions" id="dActions">
+            ${!s.strict && tries >= SCAFFOLD_TRIES ? `<button class="btn" id="dSkip">Good try — move on →</button>` : ""}
+            <a class="btn alt" href="#/train/${e.cat}">Practise again later</a>
+          </div>
+        </div>
+      </div>`;
+    $("playBtn").onclick = () => pronounceText(s.text, s.speed, $("playBtn"));
+    const slowBtn = $("playSlowBtn"); if (slowBtn) slowBtn.onclick = () => pronounceText(s.text, "slow", slowBtn);
+    $("pMic").onclick = () => toggleRec("practice");
+    $("pClear").onclick = clearPracticeClip;
+    $("pSubmit").onclick = submitDrill;
+    const skip = $("dSkip"); if (skip) skip.onclick = () => advanceDrill(c, false);
+    practiceClip = null;
+  }
+
+  async function submitDrill() {
+    if (!practiceClip || !drill) return;
+    hideError();
+    const c = CATS[drill.entry.cat]; const st = deepState(drill.id); const i = st.step; const s = drill.steps[i];
+    $("pSubmit").disabled = true; $("pBar").classList.add("show");
+    $("dFeedback").className = "step-feedback";  // clear the previous attempt's verdict
+    kiliMood("think", "Let me check… 🤔", true);
+    const form = new FormData();
+    form.append("file", practiceClip.blob, practiceClip.name);
+    form.append("text", s.text);
+    form.append("lenient", s.strict ? "false" : "true");
+    try {
+      const res = await fetch("/check", { method: "POST", body: form });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body.detail || `Request failed (${res.status})`);
+      const pass = body.verdict === "correct" || (!s.strict && body.verdict === "close");
+      // Whole-word steps are the real test; the doctor sees those attempts.
+      if (s.kind === "full" || s.kind === "slow") pushAttempt(drill.id, body, "deep");
+      const fb = $("dFeedback");
+      // 3 stars = joy, 2 = happy with the piece repeated, 1 = sad with the correction.
+      kiliReact(body, { tamil: s.text, roman: s.roman || "", url: `/say?text=${encodeURIComponent(s.text)}&speed=slow` });
+      if (pass) {
+        fb.className = "step-feedback show pass";
+        fb.innerHTML = `✓ ${body.verdict === "correct" ? "Perfect!" : "Close enough — nice!"} <small>heard: <span class="tam">${body.heard.tamil || "—"}</span> · ${body.heard.roman || ""}</small>`;
+        chime();
+        setTimeout(() => advanceDrill(c, true), 900);
+      } else {
+        st.tries = st.tries || {}; st.tries[i] = (st.tries[i] || 0) + 1; setDeepState(drill.id, st);
+        fb.className = "step-feedback show fail";
+        fb.innerHTML = `${body.verdict === "no_speech" ? "🤫 I didn't hear anything" : `🤔 That sounded like <span class="tam">${body.heard.tamil}</span>`} <small>Listen again, then try once more.</small>`;
+        $("dTries").textContent = `${st.tries[i]} ${st.tries[i] === 1 ? "try" : "tries"} so far`;
+        if (!s.strict && st.tries[i] >= SCAFFOLD_TRIES && !$("dSkip")) {
+          const b = document.createElement("button"); b.className = "btn"; b.id = "dSkip"; b.textContent = "Good try — move on →";
+          b.onclick = () => advanceDrill(c, false); $("dActions").prepend(b);
+        }
+        clearPracticeClip();
+      }
+    } catch (err) {
+      showError(err.message || "Checking failed.");
+    } finally { $("pBar").classList.remove("show"); const sb = $("pSubmit"); if (sb) sb.disabled = false; }
+  }
+
+  function advanceDrill(c, passed) {
+    const st = deepState(drill.id);
+    if (st.step >= drill.steps.length - 1) {
+      // Final whole-word step passed: the word is (or stays) unlocked in
+      // Training, and stays in Deep Training so it can be trained again.
+      if (!passed) return;  // the strict final step is never skipped
+      const wasLocked = isLocked(drill.id);
+      setDeepState(drill.id, { wrong: 0, status: "deep_done", step: 0, tries: {}, finishedAt: Date.now() });
+      updateDeepBadge(); confetti(); chime();
+      const e = drill.entry;
+      $("view").innerHTML = `
+        <div class="card" style="text-align:center;padding:44px 24px">
+          <div style="font-size:64px">🏆</div>
+          <h2 class="title" style="margin-top:8px">You did it!</h2>
+          <div class="word tam" style="font-size:44px;margin:6px 0">${e.tamil}</div>
+          <p class="lead">You built <b>${e.roman}</b> up piece by piece and said the whole thing perfectly.${wasLocked ? " It's unlocked in Training again." : ""}</p>
+          <div class="actions">
+            <a class="btn big" href="#/train/${e.cat}/${e.id}">⭐ Say it in Training</a>
+            <button class="btn alt" id="dAgainBtn">🔁 Train it again</button>
+            <a class="btn alt" href="#/deep">Back to Deep Training</a>
+          </div>
+        </div>`;
+      $("dAgainBtn").onclick = () => viewDrill(drill.id);
+      return;
+    }
+    st.step += 1; setDeepState(drill.id, st);
+    renderDrillStep(c);
+  }
+
+  /* =========================================================
+     the buddy: five characters who tell the child how they did, out loud
+     ========================================================= */
+  const KILI_KEY = "tamiltutor.kili", CHAR_KEY = "tamiltutor.character";
+  // Fallback copy of the server's catalogue (/feedback), so the bubble has
+  // words even before the fetch returns.
+  let FB = {
+    for_verdict: { correct: "correct", close: "close", incorrect: "wrong", no_speech: "no_speech" },
+    tip_for: { close: "tip_close", wrong: "tip_wrong" },
+    phrases: {
+      correct:   { en: "Well done! You spoke correctly.", ta: "நன்று! சரியாகச் சொன்னாய்!" },
+      close:     { en: "Almost! The correct pronunciation is", ta: "கிட்டத்தட்ட சரி! சரியான உச்சரிப்பு" },
+      tip_close: { en: "Try once more!", ta: "இன்னொரு முறை சொல்!" },
+      wrong:     { en: "Your pronunciation is wrong. The correct pronunciation is", ta: "உச்சரிப்பு தவறு. சரியான உச்சரிப்பு" },
+      tip_wrong: { en: "Say it slowly. You can do it!", ta: "மெதுவாகச் சொல். உன்னால் முடியும்!" },
+      no_speech: { en: "I could not hear you. Try again.", ta: "கேட்கவில்லை. மீண்டும் சொல்." },
+    },
+  };
+  fetch("/feedback").then((r) => r.json()).then((d) => { if (d && d.phrases) FB = d; }).catch(() => {});
+
+  // Every character is an inline SVG on a 220×250 canvas sharing the same
+  // part names, so one set of moods (sad / happy / joy …) animates them all:
+  //   .head  .arm.l/.arm.r  .pupil  .lid  .brow.l/.r  .cheek
+  //   .m-neutral/.m-smile/.m-frown  .sparkle  (.tail .trunk .bulb optional)
+  // Head parts use style="fill:var(--head, base)" so a mood can recolour the head.
+  const EYES = (lx, rx, y, pupil = "#1a202c", lid = "var(--head, #48bb78)") => `
+    <g class="eye"><ellipse cx="${lx}" cy="${y}" rx="17" ry="19" fill="#fff"/><g class="pupil" style="transform-origin:${lx + 2}px ${y + 2}px"><circle cx="${lx + 2}" cy="${y + 2}" r="8.5" fill="${pupil}"/><circle cx="${lx + 6}" cy="${y - 2}" r="3" fill="#fff"/></g><ellipse class="lid skin" cx="${lx}" cy="${y}" rx="17.5" ry="19.5" style="fill:${lid}"/></g>
+    <g class="eye"><ellipse cx="${rx}" cy="${y}" rx="17" ry="19" fill="#fff"/><g class="pupil" style="transform-origin:${rx - 2}px ${y + 2}px"><circle cx="${rx - 2}" cy="${y + 2}" r="8.5" fill="${pupil}"/><circle cx="${rx + 2}" cy="${y - 2}" r="3" fill="#fff"/></g><ellipse class="lid skin" cx="${rx}" cy="${y}" rx="17.5" ry="19.5" style="fill:${lid}"/></g>`;
+  const BROWS = (color) => `
+    <path class="brow l" d="M74 64 q14 -9 28 0" stroke="${color}" stroke-width="4.5" fill="none" stroke-linecap="round" style="transform-origin:88px 66px"/>
+    <path class="brow r" d="M118 64 q14 -9 28 0" stroke="${color}" stroke-width="4.5" fill="none" stroke-linecap="round" style="transform-origin:132px 66px"/>`;
+  const MOUTH = (y, color, neutral = `M100 ${y} q10 6 20 0`) => `
+    <path class="m-neutral" d="${neutral}" stroke="${color}" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <path class="m-smile" d="M88 ${y - 4} q22 22 44 0" stroke="${color}" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+    <path class="m-frown" d="M90 ${y + 10} q20 -16 40 0" stroke="${color}" stroke-width="4.5" fill="none" stroke-linecap="round"/>`;
+  const CHEEKS = `<ellipse class="cheek" cx="70" cy="114" rx="11" ry="7" fill="#fc8181"/><ellipse class="cheek" cx="150" cy="114" rx="11" ry="7" fill="#fc8181"/>`;
+  const STAR = (x, y, s, c) => `<path class="sparkle" transform="translate(${x} ${y}) scale(${s})" d="M0 -10 L3 -3 L10 0 L3 3 L0 10 L-3 3 L-10 0 L-3 -3 Z" fill="${c}"/>`;
+  const SPARKLES = `<g class="sparkles">${STAR(30, 40, 1.2, "#ffd23f")}${STAR(190, 34, 1, "#5be0d8")}${STAR(24, 130, .9, "#ff8fab")}${STAR(196, 120, 1.1, "#c084fc")}</g>`;
+  const CHARACTERS = {
+    parrot: { name: "Kili", tamil: "கிளி", emoji: "🦜", tag: "A chatty green parrot who loves to repeat every word.", svg: () => `
+      <svg class="char" viewBox="0 0 220 250" xmlns="http://www.w3.org/2000/svg">${SPARKLES}
+        <path d="M62 196 q-34 36 -14 52 q14 -26 34 -40z" fill="#e53e3e"/><path d="M78 202 q-22 44 2 52 q6 -30 22 -44z" fill="#3182ce"/><path d="M94 206 q-10 42 12 48 q0 -28 10 -42z" fill="#ecc94b"/>
+        <ellipse cx="110" cy="160" rx="60" ry="64" fill="#38a169"/><ellipse cx="110" cy="174" rx="40" ry="46" fill="#9ae6b4"/>
+        <g class="arm l" style="transform-origin:62px 128px"><ellipse cx="54" cy="162" rx="22" ry="46" fill="#2f855a" transform="rotate(14 54 162)"/><ellipse cx="50" cy="176" rx="12" ry="30" fill="#276749" transform="rotate(14 50 176)"/></g>
+        <g class="arm r" style="transform-origin:158px 128px"><ellipse cx="166" cy="162" rx="22" ry="46" fill="#2f855a" transform="rotate(-14 166 162)"/><ellipse cx="170" cy="176" rx="12" ry="30" fill="#276749" transform="rotate(-14 170 176)"/></g>
+        <path d="M92 222 l-9 16 M97 222 l0 17 M102 222 l6 16 M118 222 l-6 16 M123 222 l0 17 M128 222 l9 16" stroke="#ed8936" stroke-width="5" stroke-linecap="round" fill="none"/>
+        <g class="head">
+          <path d="M100 44 q-6 -34 16 -34 q-8 14 2 24z" fill="#e53e3e"/><path d="M112 42 q12 -32 32 -22 q-18 8 -16 24z" fill="#ecc94b"/><path d="M92 48 q-26 -18 -16 -34 q6 16 24 24z" fill="#4299e1"/>
+          <circle class="skin" cx="110" cy="94" r="56" style="fill:var(--head, #48bb78)"/><ellipse cx="110" cy="112" rx="34" ry="26" fill="#f0fff4"/>
+          ${CHEEKS}${EYES(88, 132, 88)}${BROWS("#276749")}
+          <path d="M98 126 q12 8 24 0 l-8 14 q-4 4 -8 0z" fill="#dd6b20"/><path d="M90 106 q20 -14 40 0 l-12 26 q-8 6 -16 0z" fill="#ed8936"/><path d="M100 108 q10 -6 20 0" stroke="#fbd38d" stroke-width="3" fill="none" stroke-linecap="round" opacity=".8"/>
+          <path class="m-neutral" d="M0 0" stroke="none"/>
+          <path class="m-smile" d="M84 132 q26 22 52 0" stroke="#c05621" stroke-width="4" fill="none" stroke-linecap="round"/>
+          <path class="m-frown" d="M86 146 q24 -16 48 0" stroke="#c05621" stroke-width="4" fill="none" stroke-linecap="round"/>
+        </g></svg>` },
+    elephant: { name: "Yaanai", tamil: "யானை", emoji: "🐘", tag: "A gentle blue elephant with big flappy ears and a happy trunk.", svg: () => `
+      <svg class="char" viewBox="0 0 220 250" xmlns="http://www.w3.org/2000/svg">${SPARKLES}
+        <ellipse cx="110" cy="184" rx="60" ry="54" fill="#5b8ad9"/><ellipse cx="110" cy="194" rx="38" ry="36" fill="#dbe7ff"/>
+        <rect x="66" y="214" width="28" height="32" rx="13" fill="#4a78c7"/><rect x="126" y="214" width="28" height="32" rx="13" fill="#4a78c7"/>
+        <path d="M72 240 h16 M132 240 h16" stroke="#dbe7ff" stroke-width="4" stroke-linecap="round"/>
+        <g class="arm l" style="transform-origin:66px 96px"><ellipse class="skin" cx="48" cy="100" rx="30" ry="40" style="fill:var(--head, #6c9be8)"/><ellipse cx="52" cy="102" rx="18" ry="27" fill="#f9a8d4"/></g>
+        <g class="arm r" style="transform-origin:154px 96px"><ellipse class="skin" cx="172" cy="100" rx="30" ry="40" style="fill:var(--head, #6c9be8)"/><ellipse cx="168" cy="102" rx="18" ry="27" fill="#f9a8d4"/></g>
+        <g class="head">
+          <circle class="skin" cx="110" cy="96" r="54" style="fill:var(--head, #6c9be8)"/>
+          <path d="M96 46 q6 -20 14 -4 q4 -16 14 2" stroke="#2c4f9e" stroke-width="4" fill="none" stroke-linecap="round"/>
+          ${CHEEKS}${EYES(88, 132, 88, "#1a202c", "var(--head, #6c9be8)")}${BROWS("#2c4f9e")}
+          <path class="m-smile" d="M80 128 q30 24 60 0" stroke="#2c4f9e" stroke-width="4" fill="none" stroke-linecap="round"/>
+          <path class="m-frown" d="M82 146 q28 -18 56 0" stroke="#2c4f9e" stroke-width="4" fill="none" stroke-linecap="round"/>
+          <path class="m-neutral" d="M0 0" stroke="none"/>
+          <g class="trunk" style="transform-origin:110px 116px"><path class="skin-stroke" d="M110 114 q-4 32 12 46 q12 10 22 -4" style="stroke:var(--head, #6c9be8)" stroke-width="18" fill="none" stroke-linecap="round"/><path d="M104 132 h12 M106 146 h12" stroke="#2c4f9e" stroke-width="3" opacity=".45" stroke-linecap="round"/></g>
+        </g></svg>` },
+    cat: { name: "Poonai", tamil: "பூனை", emoji: "🐱", tag: "A playful orange kitten who wags her tail when you get it right.", svg: () => `
+      <svg class="char" viewBox="0 0 220 250" xmlns="http://www.w3.org/2000/svg">${SPARKLES}
+        <path class="tail" style="transform-origin:150px 206px" d="M150 206 q44 -6 46 -54" stroke="#ff9f43" stroke-width="14" fill="none" stroke-linecap="round"/><path d="M190 168 q6 -10 6 -16" stroke="#e67e22" stroke-width="14" stroke-linecap="round"/>
+        <ellipse cx="110" cy="184" rx="54" ry="52" fill="#ff9f43"/><ellipse cx="110" cy="196" rx="34" ry="36" fill="#ffe8cc"/>
+        <path d="M70 160 q10 8 0 18 M150 160 q-10 8 0 18" stroke="#e67e22" stroke-width="5" fill="none" stroke-linecap="round"/>
+        <g class="arm l" style="transform-origin:74px 180px"><ellipse cx="66" cy="200" rx="14" ry="24" fill="#ff9f43"/><ellipse cx="66" cy="216" rx="12" ry="8" fill="#ffe8cc"/></g>
+        <g class="arm r" style="transform-origin:146px 180px"><ellipse cx="154" cy="200" rx="14" ry="24" fill="#ff9f43"/><ellipse cx="154" cy="216" rx="12" ry="8" fill="#ffe8cc"/></g>
+        <g class="head">
+          <path class="skin" d="M62 84 l4 -48 l40 28z" style="fill:var(--head, #ff9f43)"/><path d="M70 78 l3 -30 l24 18z" fill="#fbb6ce"/>
+          <path class="skin" d="M158 84 l-4 -48 l-40 28z" style="fill:var(--head, #ff9f43)"/><path d="M150 78 l-3 -30 l-24 18z" fill="#fbb6ce"/>
+          <circle class="skin" cx="110" cy="98" r="54" style="fill:var(--head, #ff9f43)"/>
+          <path d="M96 52 q6 10 0 20 M110 48 q6 10 0 22 M124 52 q-6 10 0 20" stroke="#e67e22" stroke-width="5" fill="none" stroke-linecap="round"/>
+          <ellipse cx="110" cy="122" rx="30" ry="20" fill="#ffe8cc"/>
+          ${CHEEKS}${EYES(88, 132, 90, "#2d3748", "var(--head, #ff9f43)")}${BROWS("#c05621")}
+          <path d="M104 116 l6 -6 l6 6 q-6 6 -12 0z" fill="#f687b3"/>
+          <path d="M60 116 l28 4 M60 128 l28 -2 M160 116 l-28 4 M160 128 l-28 -2" stroke="#c05621" stroke-width="2.5" stroke-linecap="round" opacity=".8"/>
+          <path class="m-neutral" d="M100 124 q5 8 10 0 q5 8 10 0" stroke="#c05621" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+          <path class="m-smile" d="M90 122 q20 20 40 0" stroke="#c05621" stroke-width="4" fill="none" stroke-linecap="round"/>
+          <path class="m-frown" d="M92 136 q18 -14 36 0" stroke="#c05621" stroke-width="4" fill="none" stroke-linecap="round"/>
+        </g></svg>` },
+    robot: { name: "Robo", tamil: "ரோபோ", emoji: "🤖", tag: "A shiny little robot whose light glows when you shine.", svg: () => `
+      <svg class="char" viewBox="0 0 220 250" xmlns="http://www.w3.org/2000/svg">${SPARKLES}
+        <rect x="64" y="150" width="92" height="74" rx="18" fill="#4fc3f7"/><rect x="82" y="164" width="56" height="34" rx="8" fill="#0b2545"/>
+        <rect x="90" y="172" width="8" height="18" rx="3" fill="#69f0ae"/><rect x="104" y="178" width="8" height="12" rx="3" fill="#ffd740"/><rect x="118" y="168" width="8" height="22" rx="3" fill="#ff5252"/>
+        <circle cx="86" cy="232" r="13" fill="#455a64"/><circle cx="134" cy="232" r="13" fill="#455a64"/><circle cx="86" cy="232" r="5" fill="#cfd8dc"/><circle cx="134" cy="232" r="5" fill="#cfd8dc"/>
+        <g class="arm l" style="transform-origin:64px 166px"><rect x="30" y="160" width="36" height="14" rx="7" fill="#90a4ae"/><circle cx="28" cy="167" r="11" fill="#ffb74d"/></g>
+        <g class="arm r" style="transform-origin:156px 166px"><rect x="154" y="160" width="36" height="14" rx="7" fill="#90a4ae"/><circle cx="192" cy="167" r="11" fill="#ffb74d"/></g>
+        <g class="head">
+          <path d="M110 58 v-18" stroke="#90a4ae" stroke-width="5" stroke-linecap="round"/><circle class="bulb" cx="110" cy="34" r="10" fill="#ffeb3b"/>
+          <rect class="skin" x="54" y="56" width="112" height="92" rx="26" style="fill:var(--head, #64b5f6)"/>
+          <circle cx="54" cy="102" r="9" fill="#ffb74d"/><circle cx="166" cy="102" r="9" fill="#ffb74d"/>
+          <rect x="68" y="70" width="84" height="64" rx="16" fill="#0b2545"/>
+          ${EYES(92, 128, 96, "#00e5ff", "#0b2545")}${BROWS("#00e5ff")}
+          <circle class="cheek" cx="76" cy="122" r="5" fill="#ff8a80"/><circle class="cheek" cx="144" cy="122" r="5" fill="#ff8a80"/>
+          <path class="m-neutral" d="M96 122 h28" stroke="#00e5ff" stroke-width="4" stroke-linecap="round"/>
+          <path class="m-smile" d="M92 118 q18 16 36 0" stroke="#69f0ae" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+          <path class="m-frown" d="M92 128 q18 -12 36 0" stroke="#ff5252" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+        </g></svg>` },
+    puppy: { name: "Kutty", tamil: "குட்டி நாய்", emoji: "🐶", tag: "A soft cream puppy with floppy ears and a jingly bell.", svg: () => `
+      <svg class="char" viewBox="0 0 220 250" xmlns="http://www.w3.org/2000/svg">${SPARKLES}
+        <path class="tail" style="transform-origin:156px 198px" d="M156 198 q32 -4 36 -38" stroke="#fdf6e3" stroke-width="13" fill="none" stroke-linecap="round"/>
+        <ellipse cx="110" cy="188" rx="54" ry="48" fill="#fdf6e3"/><ellipse cx="110" cy="200" rx="30" ry="26" fill="#fff"/>
+        <g class="arm l" style="transform-origin:76px 190px"><ellipse cx="68" cy="212" rx="13" ry="26" fill="#fdf6e3"/><ellipse cx="68" cy="232" rx="12" ry="7" fill="#f2e2c4"/></g>
+        <g class="arm r" style="transform-origin:144px 190px"><ellipse cx="152" cy="212" rx="13" ry="26" fill="#fdf6e3"/><ellipse cx="152" cy="232" rx="12" ry="7" fill="#f2e2c4"/></g>
+        <path d="M72 148 q38 30 76 0" stroke="#6b3e26" stroke-width="11" fill="none" stroke-linecap="round"/><circle cx="110" cy="168" r="9" fill="#f6c344"/><path d="M106 170 h8" stroke="#b8860b" stroke-width="2"/>
+        <g class="head">
+          <ellipse class="skin" cx="58" cy="104" rx="16" ry="38" transform="rotate(12 58 104)" style="fill:var(--head, #f2e2c4)"/>
+          <ellipse class="skin" cx="162" cy="104" rx="16" ry="38" transform="rotate(-12 162 104)" style="fill:var(--head, #f2e2c4)"/>
+          <circle class="skin" cx="110" cy="96" r="54" style="fill:var(--head, #fdf6e3)"/>
+          <ellipse cx="110" cy="124" rx="28" ry="20" fill="#fff"/>
+          ${CHEEKS}${EYES(88, 132, 88, "#1a202c", "var(--head, #fdf6e3)")}${BROWS("#c9a97a")}
+          <ellipse cx="110" cy="114" rx="9" ry="7" fill="#1a202c"/><circle cx="107" cy="112" r="2.5" fill="#fff"/>
+          <path class="m-neutral" d="M104 128 q6 6 12 0" stroke="#7c5a3a" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+          <path class="m-smile" d="M92 124 q18 16 36 0" stroke="#7c5a3a" stroke-width="4" fill="none" stroke-linecap="round"/>
+          <path class="m-frown" d="M94 138 q16 -12 32 0" stroke="#7c5a3a" stroke-width="4" fill="none" stroke-linecap="round"/>
+        </g></svg>` },
+    teddy: { name: "Karadi", tamil: "கரடி", emoji: "🧸", tag: "A cuddly brown teddy bear with a little red bow.", svg: () => `
+      <svg class="char" viewBox="0 0 220 250" xmlns="http://www.w3.org/2000/svg">${SPARKLES}
+        <ellipse cx="110" cy="186" rx="56" ry="50" fill="#b5651d"/><ellipse cx="110" cy="196" rx="32" ry="30" fill="#e0b07a"/>
+        <ellipse cx="78" cy="228" rx="19" ry="14" fill="#b5651d"/><ellipse cx="142" cy="228" rx="19" ry="14" fill="#b5651d"/><ellipse cx="78" cy="230" rx="10" ry="7" fill="#e0b07a"/><ellipse cx="142" cy="230" rx="10" ry="7" fill="#e0b07a"/>
+        <g class="arm l" style="transform-origin:66px 170px"><ellipse cx="56" cy="186" rx="14" ry="30" fill="#b5651d" transform="rotate(20 56 186)"/><ellipse cx="50" cy="208" rx="10" ry="8" fill="#e0b07a"/></g>
+        <g class="arm r" style="transform-origin:154px 170px"><ellipse cx="164" cy="186" rx="14" ry="30" fill="#b5651d" transform="rotate(-20 164 186)"/><ellipse cx="170" cy="208" rx="10" ry="8" fill="#e0b07a"/></g>
+        <path d="M94 148 l16 8 l-16 8z M126 148 l-16 8 l16 8z" fill="#e53e3e"/><circle cx="110" cy="156" r="4.5" fill="#c53030"/>
+        <g class="head">
+          <circle class="skin" cx="62" cy="54" r="19" style="fill:var(--head, #b5651d)"/><circle cx="62" cy="54" r="10" fill="#e0b07a"/>
+          <circle class="skin" cx="158" cy="54" r="19" style="fill:var(--head, #b5651d)"/><circle cx="158" cy="54" r="10" fill="#e0b07a"/>
+          <circle class="skin" cx="110" cy="96" r="54" style="fill:var(--head, #b5651d)"/>
+          <ellipse cx="110" cy="124" rx="28" ry="20" fill="#e0b07a"/>
+          ${CHEEKS}${EYES(90, 130, 90, "#3b2314", "var(--head, #b5651d)")}${BROWS("#7c3f0e")}
+          <ellipse cx="110" cy="116" rx="8" ry="6" fill="#3b2314"/><path d="M110 122 v6" stroke="#3b2314" stroke-width="2.5" stroke-linecap="round"/>
+          <path class="m-neutral" d="M104 130 q6 6 12 0" stroke="#3b2314" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+          <path class="m-smile" d="M92 126 q18 16 36 0" stroke="#3b2314" stroke-width="4" fill="none" stroke-linecap="round"/>
+          <path class="m-frown" d="M94 140 q16 -12 32 0" stroke="#3b2314" stroke-width="4" fill="none" stroke-linecap="round"/>
+        </g></svg>` },
+  };
+  const CHAR_ORDER = ["parrot", "puppy", "cat", "teddy", "elephant", "robot"];
+  function charId() { try { const c = localStorage.getItem(CHAR_KEY); return CHARACTERS[c] ? c : "parrot"; } catch { return "parrot"; } }
+  function character() { return CHARACTERS[charId()]; }
+  function mountCharacter(id) {
+    if (!CHARACTERS[id]) id = "parrot";
+    try { localStorage.setItem(CHAR_KEY, id); } catch {}
+    $("kili").dataset.char = id; $("kiliArt").innerHTML = CHARACTERS[id].svg();
+    $("kiliName").textContent = `${CHARACTERS[id].emoji} ${CHARACTERS[id].name}`;
+  }
+  mountCharacter(charId());
+
+  function kiliPrefs() { try { return { voice: true, lang: "en", ...JSON.parse(localStorage.getItem(KILI_KEY) || "{}") }; } catch { return { voice: true, lang: "en" }; } }
+  function saveKiliPrefs(p) { try { localStorage.setItem(KILI_KEY, JSON.stringify({ ...kiliPrefs(), ...p })); } catch {} renderKiliMute(); }
+  function renderKiliMute() { const on = kiliPrefs().voice; const b = $("kiliMute"); b.textContent = on ? "🔊" : "🔇"; b.classList.toggle("off", !on); b.title = on ? `${character().name}'s voice is on — tap to mute` : `${character().name} is muted — tap to unmute`; }
+  $("kiliMute").onclick = (e) => { e.stopPropagation(); const on = !kiliPrefs().voice; saveKiliPrefs({ voice: on }); if (!on) stopKili(); kiliMood("idle", on ? "I'll speak up again! 🔊" : "Okay, I'll be quiet. 🤫"); };
+  renderKiliMute();
+  // The message can be closed to see the page underneath; the voice carries on.
+  $("kiliClose").onclick = (e) => { e.stopPropagation(); $("kiliBubble").classList.remove("show"); };
+
+  const KILI_MOODS = ["idle", "happy", "joy", "sad", "think", "listen"];
+  let kiliBubbleTimer = 0;
+  function kiliMood(mood, html, sticky = false) {
+    const k = $("kili"); for (const m of KILI_MOODS) k.classList.remove(m);
+    void k.offsetWidth;   // restart the mood's animations even when the mood repeats
+    k.classList.add(mood);
+    if (html === undefined) return;
+    const b = $("kiliBubble"); clearTimeout(kiliBubbleTimer);
+    if (html) { $("kiliText").innerHTML = html; b.classList.add("show"); if (!sticky) kiliBubbleTimer = setTimeout(() => b.classList.remove("show"), 9000); }
+    else b.classList.remove("show");
+  }
+  const kiliAudio = new Audio(); kiliAudio.preload = "auto";
+  let kiliSeq = 0, kiliLast = null;
+  function kiliPlay(url) {
+    return new Promise((resolve) => { kiliAudio.onended = resolve; kiliAudio.onerror = resolve; kiliAudio.src = url; kiliAudio.play().catch(resolve); });
+  }
+  async function kiliSpeak(parts) {
+    const seq = ++kiliSeq;
+    if (!kiliPrefs().voice) return;
+    stopPronunciation();
+    const b = $("kiliBubble");
+    try {
+      for (const p of parts) {
+        if (seq !== kiliSeq) return;
+        b.classList.toggle("saying", !!p.word);
+        await kiliPlay(p.url);
+        b.classList.remove("saying");
+        if (p.pause) await new Promise((r) => setTimeout(r, p.pause));
+      }
+    } finally { if (seq === kiliSeq) b.classList.remove("saying"); }
+  }
+  function stopKili() { kiliSeq++; if (!kiliAudio.paused) kiliAudio.pause(); kiliAudio.onended = kiliAudio.onerror = null; $("kiliBubble").classList.remove("saying"); }
+  // After an attempt: 3 stars → joy (jump + dance), 2 → happy, 1 → sad, silence → think.
+  // The verdict is spoken, then the correct word, then how to improve.
+  function kiliReact(r, word) {
+    const key = FB.for_verdict[r.verdict] || "wrong", lang = kiliPrefs().lang;
+    const say = (k) => (FB.phrases[k] || {})[lang] || FB.phrases[k]?.en || "";
+    const phrase = say(key), tipKey = (FB.tip_for || {})[key], tip = tipKey ? say(tipKey) : "";
+    const showWord = (key === "wrong" || key === "close") && word && word.tamil;
+    const mood = { correct: "joy", close: "happy", wrong: "sad", no_speech: "think" }[key] || "sad";
+    const icon = { correct: "🌟", close: "😊", wrong: "💡", no_speech: "🤫" }[key] || "💡";
+    const html = `${icon} ${escapeHtml(phrase)}`
+      + (showWord ? ` <b class="tam kw">${escapeHtml(word.tamil)}</b>${word.roman ? ` <span class="kr">(${escapeHtml(word.roman)})</span>` : ""}` : "")
+      + (tip ? `<span class="kt">${escapeHtml(tip)}</span>` : "");
+    kiliMood(mood, html, true);
+    const parts = [{ url: `/feedback/${key}?lang=${lang}`, pause: showWord ? 250 : 0 }];
+    if (showWord && word.url) parts.push({ url: word.url, word: true, pause: 350 });
+    if (tipKey) parts.push({ url: `/feedback/${tipKey}?lang=${lang}` });
+    kiliLast = parts;
+    kiliSpeak(parts);
+  }
+  $("kiliArt").onclick = () => kiliMood("happy");   // a wiggle only — feedback is spoken once
+  const KILI_HINTS = { train: "Listen 🔊, then say it 🎤", deep: "Say each piece after me.", tasks: "Finish today's task! ⏳", transcribe: "Say anything in Tamil.", videos: "Watch a lesson 🎬", progress: "Look at your stars! ⭐", character: "Pick your buddy!", settings: "Change my voice here." };
+
+  async function viewCharacter() {
+    setCrumbs([{ label: "Home", href: "#/home" }, { label: "Character" }]);
+    const cur = charId();
+    $("view").innerHTML = `
+      <h2 class="title">Choose your buddy 🎭</h2>
+      <p class="lead">Your buddy listens, cheers when you get it right, and helps when you don't. Tap one to choose.</p>
+      <div class="grid chars">${CHAR_ORDER.map((id) => { const c = CHARACTERS[id]; return `
+        <div class="card char-card ${id === cur ? "chosen" : ""}" data-choose="${id}">
+          ${c.svg()}
+          <h3>${c.emoji} ${c.name}</h3><div class="tam">${c.tamil}</div>
+          <div class="tag">${c.tag}</div>
+          <button class="btn ${id === cur ? "ok" : "alt"}">${id === cur ? "✓ Your buddy" : "Choose"}</button>
+        </div>`; }).join("")}</div>`;
+    for (const el of document.querySelectorAll("[data-choose]")) el.onclick = () => {
+      const id = el.dataset.choose;
+      mountCharacter(id); renderKiliMute(); stopKili(); kiliLast = null;
+      for (const x of document.querySelectorAll("[data-choose]")) { const on = x.dataset.choose === id; x.classList.toggle("chosen", on); const b = x.querySelector("button"); b.textContent = on ? "✓ Your buddy" : "Choose"; b.className = `btn ${on ? "ok" : "alt"}`; }
+      kiliMood("joy", `Hi${student ? " " + escapeHtml(student.first_name) : ""}! I'm ${escapeHtml(CHARACTERS[id].name)} ${CHARACTERS[id].emoji}`);
+      confetti();
+    };
+  }
+
+  /* ---------- pronunciation ---------- */
+  const speaker = new Audio(); speaker.preload = "auto";
+  async function pronounce(entry, speed) {
+    const btn = speed === "slow" ? $("playSlowBtn") : $("playBtn");
+    return playFrom(`/pronounce/${encodeURIComponent(entry.id)}?speed=${speed}`, entry.tamil, speed, btn);
+  }
+  async function pronounceText(text, speed, btn) {
+    return playFrom(`/say?text=${encodeURIComponent(text)}&speed=${speed}`, text, speed, btn);
+  }
+  async function playFrom(url, text, speed, btn) {
+    hideError(); stopPronunciation(); stopKili();
+    setSpeaking(btn, true);
+    try {
+      const res = await fetch(url);
+      if (!res.ok) { const b = await res.json().catch(() => ({})); throw new Error(b.detail || `Request failed (${res.status})`); }
+      const objUrl = URL.createObjectURL(await res.blob());
+      try { await playUrl(objUrl); } finally { URL.revokeObjectURL(objUrl); }
+    } catch (e) {
+      if (!speakWithBrowser(text, speed)) showError("Could not play the pronunciation. " + (e.message || ""));
+    } finally { setSpeaking(btn, false); }
+  }
+  function playUrl(url) {
+    return new Promise((resolve, reject) => {
+      speaker.onended = resolve; speaker.onerror = () => reject(new Error("The audio could not be decoded."));
+      speaker.src = url; speaker.play().catch(reject);
+    });
+  }
+  function stopPronunciation() { if (!speaker.paused) speaker.pause(); speaker.onended = speaker.onerror = null; if (window.speechSynthesis) speechSynthesis.cancel(); }
+  function speakWithBrowser(text, speed) {
+    if (!window.speechSynthesis) return false;
+    const voice = speechSynthesis.getVoices().find((v) => /^ta([-_]|$)/i.test(v.lang));
+    if (!voice) return false;
+    const u = new SpeechSynthesisUtterance(text); u.voice = voice; u.lang = voice.lang; u.rate = speed === "slow" ? 0.6 : 0.9;
+    speechSynthesis.speak(u); return true;
+  }
+  function setSpeaking(btn, on) {
+    for (const id of ["playBtn", "playSlowBtn"]) { const b = $(id); if (b) b.disabled = on; }
+    if (btn) btn.classList.toggle("playing", on);
+  }
+
+  /* =========================================================
+     recording (shared by practice and transcribe)
+     ========================================================= */
+  let recorder = null, chunks = [], stream = null, audioCtx = null, rafId = 0, tick = 0, startedAt = 0, recordTarget = "practice";
+  const REC = {
+    practice:   { btn: "pMic", timer: "pTimer", hint: "pHint", level: "pLevel", busy: "Listening… tap again when you're done", done: "" },
+    transcribe: { btn: "tMic", timer: "tTimer", hint: "tHint", level: "tLevel", busy: "Recording… tap again to stop", done: "Transcribing…" },
+  };
+  function toggleRec(target) { if (recorder && recorder.state === "recording") stopRec(); else startRec(target); }
+  function stopRecordingIfAny() { if (recorder && recorder.state === "recording") { recorder.onstop = null; recorder.stop(); cleanupRec(); } }
+  function cleanupRec() { clearInterval(tick); cancelAnimationFrame(rafId); if (audioCtx) { audioCtx.close(); audioCtx = null; } if (stream) stream.getTracks().forEach((t) => t.stop()); }
+
+  async function startRec(target) {
+    hideError(); recordTarget = target; const ui = REC[target];
+    if (!navigator.mediaDevices || !window.MediaRecorder) return showError("This browser cannot record audio. Try Chrome or Edge.");
+    try { stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true } }); }
+    catch (e) { return showError("Microphone access was denied. " + (e.message || "")); }
+    chunks = [];
+    stopKili(); if (target === "practice") kiliMood("listen", "I'm listening… 👂", true);
+    recorder = new MediaRecorder(stream, pickMime());
+    recorder.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
+    recorder.onstop = onRecStop;
+    recorder.start();
+    startedAt = Date.now();
+    tick = setInterval(() => { const t = $(ui.timer); if (t) t.textContent = fmtTime((Date.now() - startedAt) / 1000); }, 200);
+    startMeter(ui.level);
+    $(ui.btn).classList.add("on"); $(ui.btn).textContent = "⏹"; $(ui.hint).textContent = ui.busy;
+  }
+  function pickMime() { for (const t of ["audio/webm;codecs=opus", "audio/webm", "audio/ogg;codecs=opus", "audio/mp4"]) if (MediaRecorder.isTypeSupported(t)) return { mimeType: t }; return {}; }
+  function stopRec() { if (recorder && recorder.state === "recording") recorder.stop(); }
+
+  async function onRecStop() {
+    const target = recordTarget; const ui = REC[target];
+    cleanupRec();
+    const btn = $(ui.btn); if (btn) { btn.classList.remove("on"); btn.textContent = "🎙️"; }
+    const lvl = $(ui.level); if (lvl) lvl.style.width = "0%";
+    const raw = new Blob(chunks, { type: recorder.mimeType || "audio/webm" });
+    if (raw.size < 1000) { const h = $(ui.hint); if (h) h.textContent = "That was empty — try again."; return; }
+    let clip = raw, name = `recording-${stamp()}.webm`, seconds = null;
+    try { const c = await toWav16k(raw); clip = c.blob; seconds = c.seconds; name = `recording-${stamp()}.wav`; } catch {}
+    if (target === "practice") setPracticeClip(clip, name, seconds);
+    else { setPending(clip, name, seconds); transcribe(); }
+  }
+  function startMeter(levelId) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const analyser = audioCtx.createAnalyser(); analyser.fftSize = 1024;
+    audioCtx.createMediaStreamSource(stream).connect(analyser);
+    const buf = new Uint8Array(analyser.fftSize);
+    (function loop() {
+      analyser.getByteTimeDomainData(buf);
+      let peak = 0; for (let i = 0; i < buf.length; i++) peak = Math.max(peak, Math.abs(buf[i] - 128) / 128);
+      const el = $(levelId); if (el) el.style.width = Math.min(100, peak * 160) + "%";
+      rafId = requestAnimationFrame(loop);
+    })();
+  }
+  async function toWav16k(blob) {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    let decoded; try { decoded = await ctx.decodeAudioData(await blob.arrayBuffer()); } finally { ctx.close(); }
+    const off = new OfflineAudioContext(1, Math.max(1, Math.round(decoded.duration * TARGET_SR)), TARGET_SR);
+    const src = off.createBufferSource(); src.buffer = decoded; src.connect(off.destination); src.start();
+    const rendered = await off.startRendering();
+    return { blob: encodeWav(rendered.getChannelData(0), TARGET_SR), seconds: decoded.duration };
+  }
+  function encodeWav(samples, sr) {
+    const buf = new ArrayBuffer(44 + samples.length * 2); const v = new DataView(buf);
+    const str = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+    str(0, "RIFF"); v.setUint32(4, 36 + samples.length * 2, true); str(8, "WAVEfmt "); v.setUint32(16, 16, true);
+    v.setUint16(20, 1, true); v.setUint16(22, 1, true); v.setUint32(24, sr, true); v.setUint32(28, sr * 2, true);
+    v.setUint16(32, 2, true); v.setUint16(34, 16, true); str(36, "data"); v.setUint32(40, samples.length * 2, true);
+    let o = 44; for (let i = 0; i < samples.length; i++, o += 2) { const s = Math.max(-1, Math.min(1, samples[i])); v.setInt16(o, s < 0 ? s * 0x8000 : s * 0x7fff, true); }
+    return new Blob([buf], { type: "audio/wav" });
+  }
+
+  /* =========================================================
+     transcribe view
+     ========================================================= */
+  let pending = null;
+  function viewTranscribe() {
+    setCrumbs([{ label: "Home", href: "#/home" }, { label: "Transcribe" }]);
+    pending = null;
+    $("view").innerHTML = `
+      <h2 class="title">Transcribe 🎙️</h2>
+      <p class="lead">Turn any Tamil speech into Tamil text, with the English letters beside it.</p>
+      <div class="tabs"><button id="tabUp" class="active">📁 Upload a file</button><button id="tabRec">🎤 Record</button></div>
+      <div id="paneUp">
+        <div class="drop" id="drop"><div class="emoji">🎵</div><strong>Drop an audio file here</strong><span>or click to browse — WAV, MP3, M4A, FLAC, OGG, Opus, WebM</span></div>
+        <input type="file" id="fileInput" accept="audio/*,.wav,.mp3,.m4a,.flac,.ogg,.opus,.webm" class="hidden" />
+      </div>
+      <div id="paneRec" class="card rec-card hidden">
+        <h4>Record</h4><div class="hint" id="tHint">Tap to start</div>
+        <button class="mic" id="tMic">🎙️</button>
+        <div class="timer" id="tTimer">00:00</div>
+        <div class="meter"><i id="tLevel"></i></div>
+      </div>
+      <div class="file card" id="filePane">
+        <b id="fileName"></b><span id="fileMeta" style="color:var(--muted)"></span>
+        <audio id="player" controls></audio>
+        <button class="btn" id="goBtn">Transcribe</button>
+        <button class="btn alt" id="clearBtn">Clear</button>
+      </div>
+      <div class="bar" id="bar"><i></i></div>
+      <div class="card out" id="out">
+        <div class="lbl2">Tamil</div><p class="tamil-text tam" id="text"></p>
+        <div class="lbl2">In English letters</div><p class="roman-text" id="textRoman"></p>
+        <div class="actions" style="justify-content:flex-start;margin:0 0 14px"><button class="btn alt" id="copyBtn">Copy</button><button class="btn alt" id="dlBtn">Download .txt</button></div>
+        <div class="stats"><div>audio<b id="mDur">–</b></div><div>compute<b id="mEl">–</b></div><div>speed<b id="mRtf">–</b></div></div>
+      </div>`;
+    $("tabUp").onclick = () => { $("tabUp").classList.add("active"); $("tabRec").classList.remove("active"); $("paneUp").classList.remove("hidden"); $("paneRec").classList.add("hidden"); };
+    $("tabRec").onclick = () => { $("tabRec").classList.add("active"); $("tabUp").classList.remove("active"); $("paneRec").classList.remove("hidden"); $("paneUp").classList.add("hidden"); };
+    const drop = $("drop");
+    drop.onclick = () => $("fileInput").click();
+    drop.ondragover = (e) => { e.preventDefault(); drop.classList.add("over"); };
+    drop.ondragleave = () => drop.classList.remove("over");
+    drop.ondrop = (e) => { e.preventDefault(); drop.classList.remove("over"); if (e.dataTransfer.files[0]) acceptFile(e.dataTransfer.files[0]); };
+    $("fileInput").onchange = (e) => { if (e.target.files[0]) acceptFile(e.target.files[0]); };
+    $("tMic").onclick = () => toggleRec("transcribe");
+    $("goBtn").onclick = transcribe;
+    $("clearBtn").onclick = () => { pending = null; $("filePane").classList.remove("show"); $("out").classList.remove("show"); $("fileInput").value = ""; };
+    $("copyBtn").onclick = async () => { await navigator.clipboard.writeText($("text").textContent + "\n" + $("textRoman").textContent); $("copyBtn").textContent = "Copied ✓"; setTimeout(() => ($("copyBtn").textContent = "Copy"), 1400); };
+    $("dlBtn").onclick = () => { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([$("text").textContent + "\n\n" + $("textRoman").textContent + "\n"], { type: "text/plain;charset=utf-8" })); a.download = `transcript-${stamp()}.txt`; a.click(); URL.revokeObjectURL(a.href); };
+  }
+  async function acceptFile(file) { hideError(); let s = null; try { const ctx = new (window.AudioContext || window.webkitAudioContext)(); s = (await ctx.decodeAudioData(await file.arrayBuffer())).duration; ctx.close(); } catch {} setPending(file, file.name, s); }
+  function setPending(blob, name, seconds) {
+    pending = { blob, name, seconds };
+    if (!$("filePane")) return;
+    $("fileName").textContent = name; $("fileMeta").textContent = (seconds ? fmtTime(seconds) + " · " : "") + (blob.size / 1048576).toFixed(2) + " MB";
+    $("player").src = URL.createObjectURL(blob); $("filePane").classList.add("show");
+  }
+  async function transcribe() {
+    if (!pending) return; hideError();
+    $("goBtn").disabled = true; $("bar").classList.add("show");
+    const form = new FormData(); form.append("file", pending.blob, pending.name);
+    try {
+      const res = await fetch("/transcribe", { method: "POST", body: form });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body.detail || `Request failed (${res.status})`);
+      $("text").textContent = body.text || "No speech was detected."; $("textRoman").textContent = body.roman || "";
+      $("mDur").textContent = fmtTime(body.duration_sec); $("mEl").textContent = body.elapsed_sec.toFixed(1) + "s"; $("mRtf").textContent = (1 / Math.max(body.real_time_factor, 0.001)).toFixed(1) + "× real-time";
+      $("out").classList.add("show");
+    } catch (e) { showError(e.message || "Transcription failed."); }
+    finally { $("goBtn").disabled = false; $("bar").classList.remove("show"); const h = $("tHint"); if (h) h.textContent = "Tap to start"; }
+  }
+
+  /* =========================================================
+     progress + settings
+     ========================================================= */
+  function viewProgress() {
+    setCrumbs([{ label: "Home", href: "#/home" }, { label: "My Progress" }]);
+    const p = loadProgress();
+    $("view").innerHTML = `
+      <h2 class="title">My Progress ⭐</h2>
+      <p class="lead">Three stars means mastered. Keep going!</p>
+      <div class="card">
+        ${CAT_ORDER.map((k) => { const c = CATS[k]; const pr = catProgress(k); return `
+          <div class="prog-row" style="--c:${c.color}">
+            <div>${c.emoji} ${c.name}</div>
+            <div class="track"><i style="width:${pr.pct}%"></i></div>
+            <div style="text-align:right">${pr.done} / ${pr.total}</div>
+          </div>`; }).join("")}
+      </div>
+      ${CAT_ORDER.map((k) => { const c = CATS[k]; const list = lexicon[k] || []; return `
+        <h3 style="margin:26px 0 12px;font-weight:900">${c.emoji} ${c.name}</h3>
+        <div class="grid items ${c.wide ? "wide" : ""}">
+          ${list.map((e) => `<a class="card tile ${c.wide ? "wide" : ""}" href="#/train/${k}/${e.id}" style="--c:${c.color};padding:14px">
+            <div class="big tam" style="font-size:${c.wide ? 18 : 28}px">${e.tamil}</div>
+            ${starHtml(p[e.id]?.best || 0)}
+            <div class="mean">${p[e.id] ? `best ${p[e.id].bestScore}%` : "not tried"}</div>
+          </a>`).join("")}
+        </div>`; }).join("")}`;
+  }
+
+  function viewSettings() {
+    setCrumbs([{ label: "Home", href: "#/home" }, { label: "Settings" }]);
+    const h = health || {};
+    $("view").innerHTML = `
+      <h2 class="title">Settings ⚙️</h2>
+      <p class="lead">Appearance, progress, and what the server is doing.</p>
+      <div class="grid cats">
+        <div class="card"><h3 style="margin:0 0 8px">Appearance</h3><p style="color:var(--muted);font-weight:700;margin:0 0 12px">Dark is easier on the eyes; light is better in bright rooms.</p>
+          <button class="btn alt" id="sTheme">Toggle theme</button></div>
+        <div class="card"><h3 style="margin:0 0 8px">My account</h3>
+          <div style="font-weight:700;color:var(--muted);line-height:1.9">
+            name: <b style="color:var(--text)">${student ? student.name : "–"}</b><br>
+            username: <b style="color:var(--text)">${student?.username || "–"}</b><br>
+            email: <b style="color:var(--text)">${student?.email || "–"}</b>
+          </div>
+          <button class="btn alt" id="sLogout" style="margin-top:12px">⏻ Sign out</button></div>
+        <div class="card"><h3 style="margin:0 0 8px">${character().emoji} ${character().name}, your buddy</h3><p style="color:var(--muted);font-weight:700;margin:0 0 12px">${character().name} tells you out loud whether you said it right, and says the correct word for you. <a href="#/character" style="color:var(--brand)">Change buddy →</a></p>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+            <button class="btn ${kiliPrefs().voice ? "" : "alt"}" id="sKiliVoice">${kiliPrefs().voice ? "🔊 Voice on" : "🔇 Voice off"}</button>
+            <div class="seg" id="sKiliLang"><button data-lang="en" class="${kiliPrefs().lang === "en" ? "active" : ""}">English</button><button data-lang="ta" class="${kiliPrefs().lang === "ta" ? "active" : ""}">தமிழ்</button></div>
+            <button class="btn alt" id="sKiliTest">▶ Hear ${character().name}</button>
+          </div></div>
+        <div class="card"><h3 style="margin:0 0 8px">Progress</h3><p style="color:var(--muted);font-weight:700;margin:0 0 12px">Stars are saved to your account and shared with your doctor. Resetting clears this device's copy.</p>
+          <button class="btn alt" id="sReset" style="border-color:var(--bad);color:var(--bad)">Reset all stars</button></div>
+        <div class="card"><h3 style="margin:0 0 8px">Server</h3>
+          <div style="font-weight:700;color:var(--muted);line-height:1.9">
+            model: <b style="color:var(--text)">${h.model_loaded ? "ready" : "loading"}</b><br>
+            decoding: <b style="color:var(--text)">${(h.default_decoding || "").toUpperCase()}</b><br>
+            voice: <b style="color:var(--text)">${h.pronunciation?.voice || "–"}</b><br>
+            pronunciations cached: <b style="color:var(--text)">${h.pronunciation ? `${h.pronunciation.ready} / ${h.pronunciation.total}` : "–"}</b>
+          </div></div>
+      </div>`;
+    $("sTheme").onclick = () => $("themeBtn").click();
+    $("sLogout").onclick = () => signOut();
+    $("sKiliVoice").onclick = () => { const on = !kiliPrefs().voice; saveKiliPrefs({ voice: on }); $("sKiliVoice").textContent = on ? "🔊 Voice on" : "🔇 Voice off"; $("sKiliVoice").classList.toggle("alt", !on); if (!on) stopKili(); };
+    for (const b of document.querySelectorAll("#sKiliLang button")) b.onclick = () => { for (const x of b.parentNode.children) x.classList.remove("active"); b.classList.add("active"); saveKiliPrefs({ lang: b.dataset.lang }); };
+    $("sKiliTest").onclick = () => { const e = byId.w_amma || (lexicon.words || [])[0]; if (!kiliPrefs().voice) saveKiliPrefs({ voice: true }); $("sKiliVoice").textContent = "🔊 Voice on"; $("sKiliVoice").classList.remove("alt"); kiliReact({ verdict: "incorrect" }, e ? { tamil: e.tamil, roman: e.roman, url: `/pronounce/${encodeURIComponent(e.id)}?speed=slow` } : null); };
+    $("sReset").onclick = () => { if (confirm("Remove all stars, attempts and deep-training progress?")) { saveProgress({}); saveDeep({}); updateDeepBadge(); viewSettings(); } };
+  }
+
+  /* =========================================================
+     delight
+     ========================================================= */
+  function confetti() {
+    const box = $("confetti"); const colors = ["#7c6cff", "#5be0d8", "#ffc857", "#ff6b8a", "#38d996"];
+    for (let i = 0; i < 70; i++) {
+      const p = document.createElement("i");
+      p.style.left = Math.random() * 100 + "vw"; p.style.background = colors[i % colors.length];
+      p.style.animationDelay = Math.random() * .4 + "s"; p.style.animationDuration = 1.2 + Math.random() * .9 + "s";
+      box.append(p); setTimeout(() => p.remove(), 2400);
+    }
+  }
+  function chime() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      [[523, 0], [659, .12], [784, .24]].forEach(([f, t]) => {
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.frequency.value = f; o.type = "sine"; g.gain.value = 0.0001;
+        o.connect(g).connect(ctx.destination);
+        o.start(ctx.currentTime + t);
+        g.gain.exponentialRampToValueAtTime(0.18, ctx.currentTime + t + .02);
+        g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + t + .35);
+        o.stop(ctx.currentTime + t + .4);
+      });
+      setTimeout(() => ctx.close(), 900);
+    } catch {}
+  }
+
+  /* ---------- helpers ---------- */
+  function fmtTime(s) { s = Math.max(0, s || 0); return `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(Math.floor(s % 60)).padStart(2, "0")}`; }
+  function stamp() { return new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19); }
+
+  // Test hook, only with ?debug in the URL: lets automated checks feed a clip
+  // in the way the recorder does, without a microphone.
+  if (new URLSearchParams(location.search).has("debug")) {
+    window.__tutor = { setPracticeClip, submitPractice, submitDrill, submitTask, loadProgress, loadDeep, deepState, setDeepState, noteTrainingResult, kiliReact, kiliMood, mountCharacter, kiliAudio };
+  }
+
+  boot();
+})();
+</script>
+</body>
+</html>
