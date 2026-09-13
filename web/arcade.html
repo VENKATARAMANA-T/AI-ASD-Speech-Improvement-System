@@ -1,0 +1,958 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Speech Adventure — Tamil Tutor Arcade</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --ink: #2b2140; --ink-soft: #4b3f63; --white: #fff;
+    --yellow: #ffd23f; --yellow-bg: #fff7c9; --yellow-deep: #ff9f1c;
+    --blue: #4aa8ff;   --blue-bg: #dcefff;   --blue-deep: #1f6fd6;
+    --green: #5ec24a;  --green-bg: #e3f8d6;  --green-deep: #2f9a2a;
+    --purple: #a45ee5; --purple-bg: #ecdcff; --purple-deep: #7a35c4;
+    --pink: #ff6fa5;   --pink-bg: #ffdfeb;   --pink-deep: #e0447f;
+    --teal: #2fc4bb;   --teal-bg: #d8f7f3;   --teal-deep: #1a9a92;
+    --wood: #b5722f; --wood-dark: #7c4a17; --wood-light: #d9955a;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body {
+    font-family: "Fredoka", "Baloo 2", "Segoe UI Rounded", "Comic Sans MS", "Segoe UI", sans-serif;
+    color: var(--ink); background: #8fd3ff; overflow-x: hidden;
+  }
+  .tam { font-family: "Nirmala UI", "Latha", "Noto Sans Tamil", "Fredoka", sans-serif; }
+  button { font-family: inherit; cursor: pointer; }
+  .hidden { display: none !important; }
+
+  /* ---------------- the meadow behind everything ---------------- */
+  .scene { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+  .scene svg { width: 100%; height: 100%; display: block; }
+
+  .page { position: relative; z-index: 1; max-width: 1240px; margin: 0 auto; padding: 14px 18px 30px; }
+
+  /* ---------------- header ---------------- */
+  .top { display: grid; grid-template-columns: 1fr auto 1fr; align-items: start; gap: 14px; margin-bottom: 14px; }
+  .hello { display: flex; align-items: flex-start; gap: 10px; }
+  .avatar {
+    width: 74px; height: 74px; border-radius: 50%; border: 5px solid var(--yellow); background: #ffe7c2; overflow: hidden;
+    flex: none; box-shadow: 0 6px 14px rgba(0,0,0,.18); display: grid; place-items: center;
+  }
+  .avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .avatar svg { width: 64px; height: 64px; }
+  .bubble {
+    position: relative; background: var(--white); border-radius: 18px; padding: 10px 40px 10px 14px; margin-top: 4px;
+    box-shadow: 0 6px 16px rgba(0,0,0,.14); min-width: 240px;
+  }
+  .bubble::before { content: ""; position: absolute; left: -10px; top: 22px; border: 8px solid transparent; border-right-color: var(--white); border-left: 0; }
+  .bubble b { display: block; font-size: 21px; font-weight: 700; }
+  .bubble span { font-size: 14px; font-weight: 600; color: var(--ink-soft); }
+  .bubble .bstar { position: absolute; right: 12px; top: 8px; font-size: 20px; filter: drop-shadow(0 2px 2px rgba(0,0,0,.2)); }
+
+  .sign { text-align: center; justify-self: center; }
+  .plank {
+    position: relative; display: inline-block; padding: 8px 34px 6px; border-radius: 22px; border: 5px solid var(--wood-dark);
+    background: repeating-linear-gradient(90deg, var(--wood) 0 22px, #c07d37 22px 44px), var(--wood);
+    box-shadow: 0 10px 22px rgba(0,0,0,.22), inset 0 -6px 0 rgba(0,0,0,.15);
+  }
+  .plank::before, .plank::after { content: "🍃"; position: absolute; top: -12px; font-size: 26px; }
+  .plank::before { left: -18px; transform: rotate(-30deg); }
+  .plank::after { right: -18px; transform: rotate(30deg) scaleX(-1); }
+  .title { font-weight: 700; line-height: .95; letter-spacing: .01em; }
+  .title .w1 { display: block; font-size: 46px; color: #ffd83d; -webkit-text-stroke: 2px #fff; text-shadow: 0 4px 0 #c56a00, 0 7px 10px rgba(0,0,0,.3); }
+  .title .w2 { display: block; font-size: 50px; color: #4fb4ff; -webkit-text-stroke: 2px #fff; text-shadow: 0 4px 0 #1c5fb8, 0 7px 10px rgba(0,0,0,.3); }
+  .title .mic { display: inline-block; width: 30px; height: 46px; margin-left: 10px; vertical-align: middle; transform: rotate(18deg); filter: drop-shadow(0 3px 2px rgba(0,0,0,.3)); }
+  .subplank { display: inline-block; margin-top: -4px; padding: 4px 22px; border-radius: 14px; background: var(--wood-dark); color: #ffe9c8; font-weight: 600; font-size: 17px; letter-spacing: .06em; border: 3px solid #5c3410; }
+
+  .right { display: flex; align-items: center; justify-content: flex-end; gap: 14px; }
+  .stars-pill {
+    display: flex; align-items: center; gap: 10px; background: var(--white); border: 4px solid var(--yellow); border-radius: 22px;
+    padding: 6px 18px 6px 10px; box-shadow: 0 6px 16px rgba(0,0,0,.14);
+  }
+  .stars-pill .big { font-size: 44px; line-height: 1; filter: drop-shadow(0 3px 2px rgba(0,0,0,.25)); }
+  .stars-pill small { display: block; font-size: 13px; font-weight: 600; color: var(--ink-soft); }
+  .stars-pill b { display: block; font-size: 30px; line-height: 1; }
+  .gear {
+    width: 62px; height: 62px; border-radius: 50%; border: 4px solid #fff; background: radial-gradient(circle at 35% 30%, #6fb9ff, #1f6fd6);
+    color: #fff; font-size: 30px; box-shadow: 0 6px 16px rgba(0,0,0,.2); display: grid; place-items: center;
+  }
+  .gear:hover { transform: rotate(25deg); }
+
+  /* ---------------- the six game cards ---------------- */
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .card {
+    position: relative; border-radius: 28px; border: 6px solid var(--c); background: linear-gradient(180deg, #f5fbff 0, var(--cbg) 100%);
+    box-shadow: 0 12px 26px rgba(0,0,0,.18); overflow: hidden; cursor: pointer; transition: transform .15s, box-shadow .15s; text-align: left; padding: 0; width: 100%;
+  }
+  .card:hover { transform: translateY(-4px) scale(1.01); box-shadow: 0 18px 32px rgba(0,0,0,.24); }
+  .card .art { height: 168px; position: relative; background: linear-gradient(180deg, #bfe6ff 0, #e4f6ff 60%, #cdf2b5 100%); overflow: hidden; }
+  .card .art .sky-cloud { position: absolute; font-size: 28px; opacity: .85; }
+  .card .ribbon {
+    margin: -22px 16px 0; position: relative; border-radius: 999px; background: var(--c); color: #fff; font-weight: 700; font-size: 24px;
+    text-align: center; padding: 8px 14px; -webkit-text-stroke: .6px rgba(0,0,0,.15); text-shadow: 0 2px 0 rgba(0,0,0,.25);
+    box-shadow: 0 6px 12px rgba(0,0,0,.18); border: 3px solid #fff;
+  }
+  .card .desc { text-align: center; font-weight: 600; font-size: 15px; color: var(--ink); margin: 10px 14px 8px; }
+  .card .chips { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; padding: 0 12px 14px; }
+  .chip {
+    display: inline-flex; align-items: center; justify-content: center; min-width: 46px; height: 38px; padding: 0 11px; border-radius: 999px;
+    color: #fff; font-weight: 700; font-size: 16px; box-shadow: 0 4px 8px rgba(0,0,0,.18); border: 2px solid rgba(255,255,255,.7); white-space: nowrap;
+  }
+  .chip.pk { background: #ff5fa2; } .chip.or { background: #ff9f1c; } .chip.gr { background: #43c24a; } .chip.bl { background: #3b8dff; } .chip.pu { background: #9b59ea; }
+  .card .levels { position: absolute; right: 12px; top: 12px; display: flex; gap: 4px; }
+  .card .levels span { width: 26px; height: 26px; border-radius: 50%; background: rgba(255,255,255,.85); display: grid; place-items: center; font-size: 14px; box-shadow: 0 2px 5px rgba(0,0,0,.2); }
+  .card .levels span.done { background: var(--yellow); }
+  .c-yellow { --c: var(--yellow); --cbg: var(--yellow-bg); --cdeep: var(--yellow-deep); }
+  .c-blue   { --c: var(--blue);   --cbg: var(--blue-bg);   --cdeep: var(--blue-deep); }
+  .c-green  { --c: var(--green);  --cbg: var(--green-bg);  --cdeep: var(--green-deep); }
+  .c-purple { --c: var(--purple); --cbg: var(--purple-bg); --cdeep: var(--purple-deep); }
+  .c-pink   { --c: var(--pink);   --cbg: var(--pink-bg);   --cdeep: var(--pink-deep); }
+  .c-teal   { --c: var(--teal);   --cbg: var(--teal-bg);   --cdeep: var(--teal-deep); }
+  .c-yellow .ribbon { color: #fff; background: linear-gradient(90deg, #ff9f1c, #ff6a00); }
+
+  /* pieces of art shared by cards and stages */
+  .kid { position: absolute; bottom: 0; }
+  .kid svg { width: 120px; height: 150px; display: block; }
+  .kid.flip svg { transform: scaleX(-1); }
+  .emo { position: absolute; line-height: 1; filter: drop-shadow(0 4px 4px rgba(0,0,0,.2)); }
+  .float { animation: float 2.6s ease-in-out infinite; }
+  @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
+  .say { position: absolute; background: #fff; border-radius: 16px; padding: 6px 12px; font-weight: 700; box-shadow: 0 4px 10px rgba(0,0,0,.18); font-size: 18px; }
+  .say::after { content: ""; position: absolute; left: 16px; bottom: -8px; border: 8px solid transparent; border-top-color: #fff; border-bottom: 0; }
+  .blk { position: absolute; width: 56px; height: 56px; border-radius: 12px; display: grid; place-items: center; font-weight: 700; font-size: 20px; color: #fff; box-shadow: 0 5px 0 rgba(0,0,0,.2); border: 3px solid #fff; }
+  .board { position: absolute; background: linear-gradient(180deg, #d9955a, #b5722f); border: 4px solid #7c4a17; border-radius: 12px; color: #fff; font-weight: 700; font-size: 22px; padding: 6px 14px; box-shadow: 0 5px 10px rgba(0,0,0,.2); }
+  .board::after { content: ""; position: absolute; left: 50%; bottom: -22px; width: 10px; height: 22px; background: #7c4a17; transform: translateX(-50%); }
+
+  .banner { margin: 22px auto 0; width: fit-content; background: var(--yellow); border: 4px solid #fff; border-radius: 999px; padding: 8px 26px; font-weight: 700; font-size: 22px; color: var(--ink); box-shadow: 0 8px 18px rgba(0,0,0,.18); }
+  .banner .b { -webkit-text-stroke: .5px rgba(0,0,0,.1); }
+
+  /* ---------------- level picker and the play panel ---------------- */
+  .panel {
+    border-radius: 30px; border: 7px solid var(--c); background: linear-gradient(180deg, #ffffff 0, var(--cbg) 100%);
+    box-shadow: 0 14px 30px rgba(0,0,0,.22); padding: 16px 18px 20px; min-height: 560px; position: relative;
+  }
+  .ptop { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .ptop .ribbon { flex: 1; margin: 0; font-size: 26px; }
+  .pbtn { border: 3px solid #fff; border-radius: 999px; background: var(--cdeep); color: #fff; font-weight: 700; font-size: 16px; padding: 8px 16px; box-shadow: 0 5px 10px rgba(0,0,0,.18); }
+  .pbtn.light { background: #fff; color: var(--ink); border-color: var(--c); }
+  .pbtn:disabled { opacity: .5; cursor: default; }
+  .lvl-pill { border-radius: 999px; background: #fff; border: 3px solid var(--c); padding: 6px 14px; font-weight: 700; }
+  .rounds { display: flex; gap: 6px; }
+  .rounds span { width: 22px; height: 22px; border-radius: 50%; background: #fff; border: 3px solid var(--c); display: grid; place-items: center; font-size: 13px; }
+  .rounds span.won { background: var(--yellow); border-color: var(--yellow-deep); }
+  .rounds span.now { box-shadow: 0 0 0 4px rgba(0,0,0,.12); }
+
+  .levels-pick { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 26px; }
+  .lvl {
+    border-radius: 24px; border: 5px solid var(--c); background: #fff; padding: 22px 16px; text-align: center; box-shadow: 0 8px 18px rgba(0,0,0,.14);
+    transition: transform .15s; position: relative;
+  }
+  .lvl:hover:not(:disabled) { transform: translateY(-4px); }
+  .lvl:disabled { filter: grayscale(.8); opacity: .75; cursor: default; }
+  .lvl .e { font-size: 52px; line-height: 1; }
+  .lvl b { display: block; font-size: 24px; margin-top: 8px; }
+  .lvl small { display: block; font-weight: 600; color: var(--ink-soft); font-size: 14px; margin-top: 2px; }
+  .lvl .best { margin-top: 10px; font-size: 20px; letter-spacing: 2px; }
+  .lvl .lock { position: absolute; right: 12px; top: 10px; font-size: 24px; }
+  .lvl .num { position: absolute; left: 12px; top: 10px; width: 32px; height: 32px; border-radius: 50%; background: var(--c); color: #fff; font-weight: 700; display: grid; place-items: center; }
+  .intro { text-align: center; font-weight: 600; font-size: 18px; color: var(--ink-soft); margin-top: 16px; }
+
+  .stage { position: relative; height: 260px; margin: 16px 0 12px; border-radius: 22px; background: linear-gradient(180deg, #bfe6ff 0, #e6f7ff 55%, #cdf2b5 100%); border: 4px solid #fff; overflow: hidden; box-shadow: inset 0 0 0 1px rgba(0,0,0,.05); }
+  .target { text-align: center; margin: 6px 0; }
+  .target .t { font-size: 40px; font-weight: 700; line-height: 1.25; }
+  .target .r { font-size: 20px; font-weight: 600; color: var(--cdeep); }
+  .target .m { font-size: 15px; font-weight: 600; color: var(--ink-soft); }
+  .target.secret .t { letter-spacing: 6px; }
+  .controls { display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; margin-top: 8px; }
+  .mic {
+    width: 96px; height: 96px; border-radius: 50%; border: 5px solid #fff; background: radial-gradient(circle at 35% 30%, #ff8c8c, #e8323c); color: #fff; font-size: 42px;
+    box-shadow: 0 8px 18px rgba(232,50,60,.4); display: grid; place-items: center; transition: transform .1s;
+  }
+  .mic:hover { transform: scale(1.05); }
+  .mic.on { background: radial-gradient(circle at 35% 30%, #ffd86b, #ff9f1c); animation: pulse 1s infinite; }
+  .mic:disabled { filter: grayscale(.6); opacity: .7; cursor: default; animation: none; }
+  @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(255,159,28,.6); } 50% { box-shadow: 0 0 0 16px rgba(255,159,28,0); } }
+  .hint { width: 100%; text-align: center; font-weight: 700; font-size: 18px; min-height: 24px; }
+  .meter { width: 260px; height: 10px; border-radius: 999px; background: rgba(0,0,0,.1); overflow: hidden; }
+  .meter div { height: 100%; width: 0; background: linear-gradient(90deg, #5ec24a, #ffd23f, #ff6a00); transition: width .08s; }
+  .result { margin-top: 12px; border-radius: 18px; padding: 12px 16px; font-weight: 700; font-size: 18px; text-align: center; display: none; }
+  .result.show { display: block; }
+  .result.ok { background: #d9f7d2; border: 3px solid #5ec24a; }
+  .result.near { background: #fff1c2; border: 3px solid #ffb703; }
+  .result.bad { background: #ffe0e0; border: 3px solid #ff5c5c; }
+  .result .heard { display: block; font-weight: 600; font-size: 16px; margin-top: 4px; color: var(--ink-soft); }
+  .result .acts { display: flex; gap: 10px; justify-content: center; margin-top: 10px; flex-wrap: wrap; }
+  .choices { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin: 10px 0; }
+  .choice { border-radius: 18px; border: 4px solid var(--c); background: #fff; padding: 14px; font-size: 24px; font-weight: 700; box-shadow: 0 6px 12px rgba(0,0,0,.14); transition: transform .12s; }
+  .choice small { display: block; font-size: 14px; color: var(--ink-soft); font-weight: 600; }
+  .choice:hover:not(:disabled) { transform: translateY(-3px); }
+  .choice.right { background: #d9f7d2; border-color: #5ec24a; }
+  .choice.wrong { background: #ffe0e0; border-color: #ff5c5c; animation: shake .4s; }
+  .choice:disabled { cursor: default; }
+  @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+
+  /* stage bits that move */
+  .star-fly { transition: left 1s cubic-bezier(.3,1.4,.5,1), top 1s cubic-bezier(.3,1.4,.5,1), transform 1s; }
+  .balloon { position: absolute; width: 96px; cursor: default; transition: transform .25s; }
+  .balloon svg { width: 96px; height: 150px; display: block; }
+  .balloon .lbl { position: absolute; left: 0; right: 0; top: 36px; text-align: center; color: #fff; font-weight: 700; font-size: 15px; line-height: 1.1; padding: 0 10px; text-shadow: 0 1px 0 rgba(0,0,0,.25); word-break: break-word; }
+  .balloon.sent { width: 150px; }
+  .balloon.sent svg { width: 150px; height: 210px; }
+  .balloon.sent .lbl { font-size: 14px; top: 40px; padding: 0 20px; }
+  .balloon.pop { animation: pop .5s forwards; }
+  @keyframes pop { 0% { transform: scale(1); opacity: 1; } 40% { transform: scale(1.3); opacity: 1; } 100% { transform: scale(0); opacity: 0; } }
+  .burst { position: absolute; font-size: 54px; animation: burst .7s forwards; pointer-events: none; }
+  @keyframes burst { 0% { transform: scale(.3); opacity: 1; } 100% { transform: scale(1.6); opacity: 0; } }
+  .food-fly { transition: left .9s ease-in-out, top .9s ease-in-out, transform .9s; }
+  .yum { animation: yum .6s ease-in-out 2; }
+  @keyframes yum { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15) rotate(-6deg); } }
+  .path { position: absolute; left: 40px; right: 40px; bottom: 60px; height: 18px; border-radius: 999px; background: #d2b48c; border: 3px solid #a8865e; }
+  .stone { position: absolute; bottom: 44px; width: 52px; height: 52px; border-radius: 50%; background: #9aa; border: 4px solid #fff; display: grid; place-items: center; font-weight: 700; color: #fff; box-shadow: 0 4px 8px rgba(0,0,0,.2); transform: translateX(-50%); }
+  .stone.done { background: var(--yellow); color: var(--ink); }
+  .stone.now { background: var(--teal); box-shadow: 0 0 0 5px rgba(47,196,187,.35); }
+  .walker { transition: left .8s ease-in-out; }
+  .chest { position: absolute; right: 30px; bottom: 50px; width: 110px; }
+  .chest svg { width: 100%; height: auto; display: block; }
+  .chest .lid { transform-origin: 8px 40px; transition: transform .6s; }
+  .chest.open .lid { transform: rotate(-70deg); }
+  .chest .glow { opacity: 0; transition: opacity .5s; }
+  .chest.open .glow { opacity: 1; }
+  .sparkle { position: absolute; font-size: 26px; animation: sparkle 1.2s ease-out forwards; pointer-events: none; }
+  @keyframes sparkle { 0% { transform: translateY(0) scale(.6); opacity: 1; } 100% { transform: translateY(-70px) scale(1.4); opacity: 0; } }
+  .fx-star { position: fixed; z-index: 50; font-size: 40px; pointer-events: none; transition: left .9s cubic-bezier(.2,.9,.3,1.2), top .9s cubic-bezier(.2,.9,.3,1.2), transform .9s; }
+
+  .end { text-align: center; padding: 30px 10px; }
+  .end h2 { font-size: 40px; margin: 0 0 6px; }
+  .end .got { font-size: 46px; letter-spacing: 4px; }
+  .end p { font-weight: 600; font-size: 18px; color: var(--ink-soft); }
+  .end .acts { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 18px; }
+
+  /* confetti + modal */
+  .confetti { position: fixed; inset: 0; pointer-events: none; z-index: 40; overflow: hidden; }
+  .confetti i { position: absolute; top: -20px; width: 12px; height: 18px; border-radius: 3px; animation: fall 2.4s linear forwards; }
+  @keyframes fall { to { transform: translateY(110vh) rotate(720deg); } }
+  .modal-bg { position: fixed; inset: 0; background: rgba(20,10,40,.5); z-index: 60; display: none; place-items: center; padding: 16px; }
+  .modal-bg.show { display: grid; }
+  .modal { background: #fff; border-radius: 26px; border: 6px solid var(--blue); padding: 20px 22px; width: min(460px, 100%); box-shadow: 0 20px 40px rgba(0,0,0,.3); }
+  .modal h3 { margin: 0 0 12px; font-size: 26px; }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 2px dashed #eee; font-weight: 600; }
+  .toggle { border-radius: 999px; border: 3px solid var(--blue); background: #fff; padding: 6px 14px; font-weight: 700; min-width: 84px; }
+  .toggle.on { background: var(--blue); color: #fff; }
+  .modal .acts { display: flex; gap: 10px; justify-content: flex-end; margin-top: 14px; flex-wrap: wrap; }
+  .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: #2b2140; color: #fff; padding: 10px 18px; border-radius: 999px; font-weight: 600; z-index: 70; display: none; }
+  .toast.show { display: block; }
+
+  @media (max-width: 980px) {
+    .grid { grid-template-columns: repeat(2, 1fr); }
+    .top { grid-template-columns: 1fr; justify-items: center; }
+    .right { justify-content: center; }
+  }
+  @media (max-width: 640px) {
+    .grid, .levels-pick { grid-template-columns: 1fr; }
+    .title .w1 { font-size: 34px; } .title .w2 { font-size: 38px; }
+    .stage { height: 230px; }
+    .target .t { font-size: 30px; }
+    .choices { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="scene" aria-hidden="true">
+  <svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMax slice">
+    <defs>
+      <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6fc3ff"/><stop offset=".6" stop-color="#bfe8ff"/><stop offset="1" stop-color="#e9f8ff"/></linearGradient>
+      <linearGradient id="grass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fdc5a"/><stop offset="1" stop-color="#4fb241"/></linearGradient>
+      <radialGradient id="sun" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff6b0"/><stop offset=".6" stop-color="#ffd23f"/><stop offset="1" stop-color="#ffd23f" stop-opacity="0"/></radialGradient>
+    </defs>
+    <rect width="1600" height="900" fill="url(#sky)"/>
+    <circle cx="1380" cy="110" r="110" fill="url(#sun)"/>
+    <g fill="#fff" opacity=".95">
+      <g transform="translate(160,120)"><ellipse cx="0" cy="0" rx="70" ry="30"/><ellipse cx="50" cy="-14" rx="50" ry="34"/><ellipse cx="-50" cy="-8" rx="44" ry="26"/></g>
+      <g transform="translate(560,70)"><ellipse cx="0" cy="0" rx="60" ry="26"/><ellipse cx="40" cy="-12" rx="42" ry="28"/><ellipse cx="-40" cy="-6" rx="36" ry="22"/></g>
+      <g transform="translate(1000,140)"><ellipse cx="0" cy="0" rx="80" ry="30"/><ellipse cx="55" cy="-16" rx="52" ry="36"/><ellipse cx="-58" cy="-8" rx="46" ry="28"/></g>
+    </g>
+    <!-- far trees -->
+    <g>
+      <rect x="50" y="330" width="34" height="200" rx="10" fill="#7c4a17"/>
+      <circle cx="67" cy="300" r="95" fill="#3fa34d"/><circle cx="20" cy="340" r="60" fill="#55b85f"/><circle cx="120" cy="335" r="62" fill="#55b85f"/>
+      <rect x="1500" y="300" width="36" height="230" rx="10" fill="#7c4a17"/>
+      <circle cx="1518" cy="270" r="100" fill="#3fa34d"/><circle cx="1465" cy="320" r="64" fill="#55b85f"/><circle cx="1575" cy="315" r="66" fill="#55b85f"/>
+      <rect x="1290" y="420" width="22" height="120" rx="8" fill="#7c4a17"/><circle cx="1301" cy="400" r="58" fill="#4db35a"/>
+      <rect x="290" y="440" width="20" height="110" rx="8" fill="#7c4a17"/><circle cx="300" cy="420" r="52" fill="#4db35a"/>
+    </g>
+    <!-- hills and grass -->
+    <path d="M0 620 Q 300 520 600 610 T 1200 600 T 1600 590 L1600 900 L0 900 Z" fill="#7fd257"/>
+    <path d="M0 700 Q 400 640 800 700 T 1600 690 L1600 900 L0 900 Z" fill="url(#grass)"/>
+    <!-- bushes -->
+    <g fill="#3f9d47">
+      <ellipse cx="220" cy="700" rx="90" ry="46"/><ellipse cx="300" cy="712" rx="70" ry="38"/>
+      <ellipse cx="1380" cy="705" rx="100" ry="48"/><ellipse cx="1290" cy="716" rx="70" ry="36"/>
+      <ellipse cx="800" cy="720" rx="60" ry="30"/>
+    </g>
+    <!-- rocks -->
+    <g fill="#9aa4ad"><ellipse cx="150" cy="860" rx="48" ry="26"/><ellipse cx="1450" cy="850" rx="56" ry="30"/><ellipse cx="900" cy="870" rx="40" ry="20"/></g>
+    <!-- flowers -->
+    <g>
+      <g transform="translate(90,820)"><circle r="12" fill="#ff5fa2"/><circle r="5" fill="#fff08a"/></g>
+      <g transform="translate(130,845)"><circle r="10" fill="#ffd23f"/><circle r="4" fill="#ff9f1c"/></g>
+      <g transform="translate(1340,830)"><circle r="12" fill="#ff5fa2"/><circle r="5" fill="#fff08a"/></g>
+      <g transform="translate(1400,860)"><circle r="10" fill="#ffd23f"/><circle r="4" fill="#ff9f1c"/></g>
+      <g transform="translate(700,850)"><circle r="11" fill="#c77dff"/><circle r="4" fill="#fff08a"/></g>
+      <g transform="translate(1000,840)"><circle r="11" fill="#ff5fa2"/><circle r="4" fill="#fff08a"/></g>
+    </g>
+  </svg>
+</div>
+
+<div class="page">
+  <header class="top">
+    <div class="hello">
+      <div class="avatar" id="avatar"></div>
+      <div class="bubble"><span class="bstar">⭐</span><b id="hiName">Hi Champ!</b><span>Let's make your voice stronger!</span></div>
+    </div>
+    <div class="sign">
+      <div class="plank">
+        <div class="title"><span class="w1">Speech</span><span class="w2">Adventure<svg class="mic" viewBox="0 0 40 60" aria-hidden="true"><rect x="12" y="4" width="16" height="30" rx="8" fill="#4fb4ff" stroke="#fff" stroke-width="3"/><path d="M6 26 Q 6 42 20 42 Q 34 42 34 26" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round"/><rect x="18" y="42" width="4" height="10" fill="#fff"/><rect x="10" y="52" width="20" height="4" rx="2" fill="#fff"/><g stroke="#1c5fb8" stroke-width="2"><line x1="14" y1="14" x2="26" y2="14"/><line x1="14" y1="20" x2="26" y2="20"/><line x1="14" y1="26" x2="26" y2="26"/></g></svg></span></div>
+      </div>
+      <div><span class="subplank">Say • Learn • Grow</span></div>
+    </div>
+    <div class="right">
+      <div class="stars-pill"><span class="big">⭐</span><div><small>My Stars</small><b id="starCount">0</b></div></div>
+      <button class="gear" id="gearBtn" title="Settings" aria-label="Settings">⚙️</button>
+    </div>
+  </header>
+
+  <main id="view"></main>
+  <div class="banner" id="banner">⭐ <span class="b">Small Sounds = Big Progress!</span></div>
+</div>
+
+<div class="confetti" id="confetti"></div>
+<div class="toast" id="toast"></div>
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h3>⚙️ Settings</h3>
+    <div class="row"><span>Signed in as</span><b id="sWho">—</b></div>
+    <div class="row"><span>🔊 Voice feedback ("Well done!")</span><button class="toggle" id="sVoice">On</button></div>
+    <div class="row"><span>🎵 Sound effects</span><button class="toggle" id="sSfx">On</button></div>
+    <div class="row"><span>⭐ My stars</span><b id="sStars">0</b></div>
+    <div class="acts">
+      <button class="pbtn light" id="sReset" style="--c: var(--pink); color: var(--pink-deep)">Reset arcade progress</button>
+      <a class="pbtn" href="/" target="_blank" rel="noopener" style="--cdeep: var(--blue-deep); text-decoration: none">Open Tamil Tutor ↗</a>
+      <button class="pbtn" id="sClose" style="--cdeep: var(--green-deep)">Done</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const TARGET_SR = 16000, ROUNDS = 5;
+  const shuffle = (a) => { const r = a.slice(); for (let i = r.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [r[i], r[j]] = [r[j], r[i]]; } return r; };
+  const pick = (a) => a[Math.floor(Math.random() * a.length)];
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  /* =========================================================
+     learning path: every game climbs the same three steps
+     ========================================================= */
+  const LEVELS = [
+    { key: "words",     name: "Words",            cat: "words",          emoji: "🧩", hint: "Everyday words" },
+    { key: "sentences", name: "Simple Sentences", cat: "sentences",      emoji: "💬", hint: "Two or three words" },
+    { key: "long",      name: "Longer Sentences", cat: "long_sentences", emoji: "📖", hint: "Four or five words" },
+  ];
+  const GAMES = [
+    { id: "catch",   title: "Say & Catch",     color: "yellow", icon: "⭐", desc: "Say the word and catch the star!",                unit: { words: "word", sentences: "sentence", long: "sentence" } },
+    { id: "balloon", title: "Balloon Speech",  color: "blue",   icon: "🎈", desc: "Pronounce the word and pop the right balloon!",  unit: { words: "word", sentences: "sentence", long: "sentence" } },
+    { id: "feed",    title: "Feed the Animal", color: "green",  icon: "🐾", desc: "Say the word correctly to feed the animal!",     unit: { words: "word", sentences: "sentence", long: "sentence" } },
+    { id: "match",   title: "Sound Match",     color: "purple", icon: "🎧", desc: "Listen and choose the matching word!",           unit: { words: "word", sentences: "sentence", long: "sentence" } },
+    { id: "build",   title: "Build the Word",  color: "pink",   icon: "🧩", desc: "Pronounce the pieces and build the word!",       unit: { words: "word", sentences: "sentence", long: "sentence" } },
+    { id: "hunt",    title: "Treasure Hunt",   color: "teal",   icon: "🧭", desc: "Say the target words to unlock treasure!",       unit: { words: "word", sentences: "sentence", long: "sentence" } },
+  ];
+  const CHIP_COLORS = ["pk", "or", "gr", "bl", "pu"];
+
+  /* =========================================================
+     who is playing (same sign-in as the child app) + lexicon
+     ========================================================= */
+  const TOKEN_KEY = "tamiltutor.token";
+  let token = null, student = null, lexicon = null, byId = {};
+  try { token = localStorage.getItem(TOKEN_KEY); } catch {}
+  async function api(path, { method = "GET", json, form, auth = true } = {}) {
+    const headers = {};
+    if (auth && token) headers.Authorization = "Bearer " + token;
+    let body = form;
+    if (json !== undefined) { headers["Content-Type"] = "application/json"; body = JSON.stringify(json); }
+    let res;
+    try { res = await fetch(path, { method, headers, body }); }
+    catch { throw new Error("The server is not reachable. Is it running?"); }
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(typeof data.detail === "string" ? data.detail : `Request failed (${res.status})`);
+    return data;
+  }
+  function pushAttempt(entry, r) {
+    if (!student || !entry) return;
+    api("/api/student/attempts", { method: "POST", json: { entry_id: entry.id, category: entry.cat || "", verdict: r.verdict, score_percent: r.score_percent || 0, source: "arcade" } }).catch(() => {});
+  }
+
+  /* =========================================================
+     stars and level progress, one bucket per child
+     ========================================================= */
+  const skey = () => "tamiltutor.arcade" + (student ? "." + student.id : "");
+  function store() { try { return JSON.parse(localStorage.getItem(skey()) || "{}"); } catch { return {}; } }
+  function save(s) { try { localStorage.setItem(skey(), JSON.stringify(s)); } catch {} }
+  const prefs = () => Object.assign({ voice: true, sfx: true }, store().prefs || {});
+  function setPref(k, v) { const s = store(); s.prefs = Object.assign(prefs(), { [k]: v }); save(s); }
+  const stars = () => store().stars || 0;
+  function addStars(n) { const s = store(); s.stars = (s.stars || 0) + n; save(s); renderStars(); }
+  function levelState(game, lvl) { return ((store().levels || {})[game] || {})[lvl] || {}; }
+  function setLevelState(game, lvl, patch) {
+    const s = store(); s.levels = s.levels || {}; s.levels[game] = s.levels[game] || {};
+    s.levels[game][lvl] = Object.assign({}, s.levels[game][lvl] || {}, patch); save(s);
+  }
+  const unlocked = (game, i) => i === 0 || !!levelState(game, LEVELS[i - 1].key).done;
+  function renderStars() { $("starCount").textContent = stars(); $("sStars").textContent = stars(); }
+
+  /* =========================================================
+     drawings: the kid, the star, a balloon, the chest
+     ========================================================= */
+  function kidSvg(shirt = "#3b8dff", { hat = false, headphones = false, arm = "up" } = {}) {
+    return `<svg viewBox="0 0 120 150" xmlns="http://www.w3.org/2000/svg">
+      <rect x="30" y="86" width="60" height="58" rx="18" fill="${shirt}"/>
+      <rect x="10" y="${arm === "up" ? 62 : 96}" width="26" height="46" rx="12" fill="${shirt}" transform="rotate(${arm === "up" ? -40 : 10} 23 ${arm === "up" ? 85 : 119})"/>
+      <rect x="84" y="96" width="26" height="46" rx="12" fill="${shirt}" transform="rotate(-10 97 119)"/>
+      <circle cx="${arm === "up" ? 8 : 16}" cy="${arm === "up" ? 60 : 140}" r="9" fill="#ffd9b3"/>
+      <circle cx="104" cy="140" r="9" fill="#ffd9b3"/>
+      <circle cx="60" cy="48" r="34" fill="#ffd9b3"/>
+      <path d="M26 44 C 26 14, 94 14, 94 44 C 84 30, 70 26, 60 30 C 48 24, 36 30, 26 44 Z" fill="#4a2c17"/>
+      <ellipse cx="48" cy="52" rx="4.5" ry="5.5" fill="#222"/><ellipse cx="72" cy="52" rx="4.5" ry="5.5" fill="#222"/>
+      <circle cx="50" cy="50" r="1.6" fill="#fff"/><circle cx="74" cy="50" r="1.6" fill="#fff"/>
+      <circle cx="40" cy="62" r="5" fill="#ffb3b3" opacity=".8"/><circle cx="80" cy="62" r="5" fill="#ffb3b3" opacity=".8"/>
+      <path d="M50 66 Q 60 76 70 66" stroke="#c0392b" stroke-width="3" fill="none" stroke-linecap="round"/>
+      ${headphones ? `<path d="M26 48 C 26 10, 94 10, 94 48" stroke="#ff5fa2" stroke-width="7" fill="none"/><rect x="18" y="42" width="14" height="24" rx="6" fill="#ff5fa2"/><rect x="88" y="42" width="14" height="24" rx="6" fill="#ff5fa2"/>` : ""}
+      ${hat ? `<path d="M20 34 L 100 34 L 92 18 Q 60 2 28 18 Z" fill="#c9a24a"/><rect x="14" y="30" width="92" height="9" rx="4" fill="#a67c2e"/>` : ""}
+    </svg>`;
+  }
+  const starSvg = (size = 90) => `<svg viewBox="0 0 100 100" width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">
+      <polygon points="50,4 62,36 96,38 69,59 78,93 50,74 22,93 31,59 4,38 38,36" fill="#ffd23f" stroke="#ff9f1c" stroke-width="4" stroke-linejoin="round"/>
+      <circle cx="41" cy="48" r="4" fill="#222"/><circle cx="59" cy="48" r="4" fill="#222"/>
+      <path d="M40 60 Q 50 70 60 60" stroke="#c0392b" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <circle cx="34" cy="57" r="4" fill="#ffb3b3" opacity=".8"/><circle cx="66" cy="57" r="4" fill="#ffb3b3" opacity=".8"/>
+    </svg>`;
+  const balloonSvg = (color) => `<svg viewBox="0 0 96 150" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="48" cy="52" rx="42" ry="50" fill="${color}"/>
+      <ellipse cx="34" cy="34" rx="10" ry="16" fill="#fff" opacity=".45"/>
+      <polygon points="42,100 54,100 48,110" fill="${color}"/>
+      <path d="M48 110 Q 40 125 48 140 Q 56 150 44 150" stroke="#555" stroke-width="2" fill="none"/>
+    </svg>`;
+  const chestSvg = () => `<svg viewBox="0 0 110 90" xmlns="http://www.w3.org/2000/svg">
+      <g class="glow"><circle cx="55" cy="40" r="44" fill="#fff6a8" opacity=".8"/><text x="22" y="30" font-size="22">✨</text><text x="70" y="24" font-size="22">✨</text></g>
+      <rect x="8" y="40" width="94" height="44" rx="8" fill="#8b5a2b" stroke="#5c3410" stroke-width="4"/>
+      <rect x="8" y="40" width="94" height="10" fill="#c9a24a"/>
+      <rect x="46" y="48" width="18" height="18" rx="4" fill="#ffd23f" stroke="#a67c2e" stroke-width="3"/>
+      <g class="lid"><path d="M8 40 L 8 28 Q 8 8 28 8 L 82 8 Q 102 8 102 28 L 102 40 Z" fill="#a0672f" stroke="#5c3410" stroke-width="4"/><rect x="8" y="30" width="94" height="8" fill="#c9a24a"/></g>
+    </svg>`;
+  const HOODIES = { yellow: "#3b8dff", blue: "#ff5fa2", green: "#e8323c", purple: "#ff5fa2", pink: "#3b8dff", teal: "#ff9f1c" };
+  const ANIMALS = ["🐘", "🐒", "🐰", "🐶", "🐱", "🐼", "🦁", "🐮"];
+  const FOODS = ["🍌", "🍎", "🥕", "🍪", "🥭", "🍉", "🍇", "🍞"];
+
+  /* =========================================================
+     sound: little effects, the neural voice, spoken feedback
+     ========================================================= */
+  let actx = null;
+  function tone(freq, dur = .15, type = "sine", gain = .18, when = 0) {
+    if (!prefs().sfx) return;
+    try {
+      actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+      const o = actx.createOscillator(), g = actx.createGain();
+      o.type = type; o.frequency.value = freq; g.gain.value = gain;
+      o.connect(g); g.connect(actx.destination);
+      const t = actx.currentTime + when; o.start(t); g.gain.setValueAtTime(gain, t); g.gain.exponentialRampToValueAtTime(.001, t + dur); o.stop(t + dur);
+    } catch {}
+  }
+  const sfx = {
+    win:  () => { tone(660, .12); tone(880, .12, "sine", .18, .12); tone(1320, .25, "sine", .18, .24); },
+    near: () => { tone(520, .15); tone(620, .2, "sine", .15, .15); },
+    lose: () => { tone(220, .25, "square", .08); tone(180, .3, "square", .08, .2); },
+    pop:  () => { tone(900, .06, "triangle", .3); tone(300, .12, "sawtooth", .12, .04); },
+    tap:  () => tone(700, .06, "triangle", .12),
+    step: () => { tone(500, .08, "triangle", .15); tone(700, .1, "triangle", .15, .08); },
+    open: () => { for (let i = 0; i < 6; i++) tone(500 + i * 120, .12, "sine", .15, i * .07); },
+  };
+  const speaker = new Audio();
+  function playUrl(url) {
+    return new Promise((resolve, reject) => { speaker.onended = resolve; speaker.onerror = () => reject(new Error("audio")); speaker.src = url; speaker.play().catch(reject); });
+  }
+  function stopSpeech() { if (!speaker.paused) speaker.pause(); speaker.onended = speaker.onerror = null; }
+  const entryUrl = (e, speed = "normal") => `/pronounce/${encodeURIComponent(e.id)}?speed=${speed}`;
+  const textUrl = (t, speed = "normal") => `/say?text=${encodeURIComponent(t)}&speed=${speed}`;
+  async function hear(url, btn) {
+    stopSpeech(); if (btn) btn.disabled = true;
+    try { await playUrl(url); } catch { toast("Could not play the sound. Is the server online?"); }
+    finally { if (btn) btn.disabled = false; }
+  }
+  const FEEDBACK = { correct: "correct", close: "close", incorrect: "wrong", no_speech: "no_speech" };
+  async function voice(verdict) {
+    if (!prefs().voice) return;
+    try { await playUrl(`/feedback/${FEEDBACK[verdict] || "wrong"}?lang=en`); } catch {}
+  }
+
+  /* =========================================================
+     the microphone (same recorder as the child app)
+     ========================================================= */
+  let recorder = null, chunks = [], stream = null, meterCtx = null, rafId = 0, onClip = null;
+  function pickMime() { for (const t of ["audio/webm;codecs=opus", "audio/webm", "audio/ogg;codecs=opus", "audio/mp4"]) if (MediaRecorder.isTypeSupported(t)) return { mimeType: t }; return {}; }
+  function cleanupRec() { cancelAnimationFrame(rafId); if (meterCtx) { meterCtx.close(); meterCtx = null; } if (stream) stream.getTracks().forEach((t) => t.stop()); stream = null; }
+  function stopRecordingIfAny() { if (recorder && recorder.state === "recording") { recorder.onstop = null; recorder.stop(); cleanupRec(); } recorder = null; }
+  async function toggleMic() {
+    if (recorder && recorder.state === "recording") { recorder.stop(); return; }
+    const mic = $("mic"); if (!mic || mic.disabled) return;
+    if (!navigator.mediaDevices || !window.MediaRecorder) return toast("This browser cannot record. Try Chrome or Edge.");
+    try { stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true } }); }
+    catch (e) { return toast("Microphone access was denied. " + (e.message || "")); }
+    stopSpeech(); chunks = [];
+    recorder = new MediaRecorder(stream, pickMime());
+    recorder.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
+    recorder.onstop = onRecStop;
+    recorder.start();
+    startMeter();
+    mic.classList.add("on"); mic.textContent = "⏹"; setHint("Listening… tap again when you're done 👂");
+    hideResult();
+  }
+  async function onRecStop() {
+    cleanupRec();
+    const mic = $("mic"); if (mic) { mic.classList.remove("on"); mic.textContent = "🎙️"; }
+    const lvl = $("level"); if (lvl) lvl.style.width = "0%";
+    const raw = new Blob(chunks, { type: recorder?.mimeType || "audio/webm" });
+    if (raw.size < 1000) { setHint("That was empty — try again."); return; }
+    let clip = raw, name = "clip.webm";
+    try { clip = await toWav16k(raw); name = "clip.wav"; } catch {}
+    if (onClip) onClip(clip, name);
+  }
+  function startMeter() {
+    meterCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const an = meterCtx.createAnalyser(); an.fftSize = 1024; meterCtx.createMediaStreamSource(stream).connect(an);
+    const buf = new Uint8Array(an.fftSize);
+    (function loop() {
+      an.getByteTimeDomainData(buf); let peak = 0; for (let i = 0; i < buf.length; i++) peak = Math.max(peak, Math.abs(buf[i] - 128) / 128);
+      const el = $("level"); if (el) el.style.width = Math.min(100, peak * 160) + "%";
+      rafId = requestAnimationFrame(loop);
+    })();
+  }
+  async function toWav16k(blob) {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    let decoded; try { decoded = await ctx.decodeAudioData(await blob.arrayBuffer()); } finally { ctx.close(); }
+    const off = new OfflineAudioContext(1, Math.max(1, Math.round(decoded.duration * TARGET_SR)), TARGET_SR);
+    const src = off.createBufferSource(); src.buffer = decoded; src.connect(off.destination); src.start();
+    const rendered = await off.startRendering();
+    return encodeWav(rendered.getChannelData(0), TARGET_SR);
+  }
+  function encodeWav(samples, sr) {
+    const buf = new ArrayBuffer(44 + samples.length * 2); const v = new DataView(buf);
+    const str = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+    str(0, "RIFF"); v.setUint32(4, 36 + samples.length * 2, true); str(8, "WAVEfmt "); v.setUint32(16, 16, true);
+    v.setUint16(20, 1, true); v.setUint16(22, 1, true); v.setUint32(24, sr, true); v.setUint32(28, sr * 2, true);
+    v.setUint16(32, 2, true); v.setUint16(34, 16, true); str(36, "data"); v.setUint32(40, samples.length * 2, true);
+    let o = 44; for (let i = 0; i < samples.length; i++, o += 2) { const s = Math.max(-1, Math.min(1, samples[i])); v.setInt16(o, s < 0 ? s * 0x8000 : s * 0x7fff, true); }
+    return new Blob([buf], { type: "audio/wav" });
+  }
+
+  /* judging a clip: against an entry, against several entries, against a piece */
+  async function judgeEntry(entry, clip, name) {
+    const form = new FormData(); form.append("entry_id", entry.id); form.append("file", clip, name);
+    const r = await api("/practice", { method: "POST", form, auth: false }); pushAttempt(entry, r); return r;
+  }
+  async function judgePick(target, options, clip, name) {
+    const form = new FormData(); form.append("target", target.id); form.append("options", JSON.stringify(options.map((o) => o.id))); form.append("file", clip, name);
+    const r = await api("/arcade/pick", { method: "POST", form, auth: false }); pushAttempt(target, r); return r;
+  }
+  async function judgeText(text, clip, name, lenient) {
+    const form = new FormData(); form.append("text", text); form.append("lenient", lenient ? "true" : "false"); form.append("file", clip, name);
+    return api("/check", { method: "POST", form, auth: false });
+  }
+
+  /* =========================================================
+     small UI helpers
+     ========================================================= */
+  function toast(msg) { const t = $("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove("show"), 3200); }
+  function setHint(text) { const h = $("hint"); if (h) h.textContent = text; }
+  function hideResult() { const r = $("result"); if (r) { r.className = "result"; r.innerHTML = ""; } }
+  function showResult(kind, html) { const r = $("result"); if (!r) return; r.className = "result show " + kind; r.innerHTML = html; }
+  function micEnabled(on) { const m = $("mic"); if (m) m.disabled = !on; }
+  function confetti() {
+    const box = $("confetti"); const colors = ["#ffd23f", "#ff5fa2", "#4aa8ff", "#5ec24a", "#a45ee5", "#ff9f1c"];
+    for (let i = 0; i < 90; i++) { const p = document.createElement("i"); p.style.left = Math.random() * 100 + "vw"; p.style.background = pick(colors); p.style.animationDelay = Math.random() * .8 + "s"; p.style.transform = `rotate(${Math.random() * 360}deg)`; box.appendChild(p); setTimeout(() => p.remove(), 3400); }
+  }
+  function flyStar(fromEl) {
+    // a star leaves the stage and lands on the My Stars counter
+    const s = document.createElement("div"); s.className = "fx-star"; s.textContent = "⭐";
+    const a = (fromEl || $("stage")).getBoundingClientRect(), b = $("starCount").getBoundingClientRect();
+    s.style.left = a.left + a.width / 2 - 20 + "px"; s.style.top = a.top + a.height / 2 - 20 + "px";
+    document.body.appendChild(s);
+    requestAnimationFrame(() => requestAnimationFrame(() => { s.style.left = b.left + "px"; s.style.top = b.top - 6 + "px"; s.style.transform = "scale(.7)"; }));
+    setTimeout(() => s.remove(), 950);
+  }
+  function sparkleAt(stage, x, y, n = 6) {
+    for (let i = 0; i < n; i++) { const e = document.createElement("span"); e.className = "sparkle"; e.textContent = pick(["✨", "⭐", "🌟"]); e.style.left = x + (Math.random() * 80 - 40) + "px"; e.style.top = y + (Math.random() * 30 - 15) + "px"; e.style.animationDelay = Math.random() * .3 + "s"; stage.appendChild(e); setTimeout(() => e.remove(), 1600); }
+  }
+  const verdictKind = (v) => v === "correct" ? "ok" : v === "close" ? "near" : "bad";
+  const heardLine = (r) => r.heard && r.heard.tamil ? `<span class="heard">I heard: <span class="tam">${esc(r.heard.tamil)}</span> (${esc(r.heard.roman)})</span>` : `<span class="heard">I could not hear any words.</span>`;
+
+  /* =========================================================
+     the arcade hub
+     ========================================================= */
+  function levelDots(game) {
+    return `<div class="levels" title="Words · Simple Sentences · Longer Sentences">${LEVELS.map((l) => `<span class="${levelState(game.id, l.key).done ? "done" : ""}">${levelState(game.id, l.key).done ? "⭐" : l.emoji}</span>`).join("")}</div>`;
+  }
+  function chipRow(entries) {
+    return entries.map((e, i) => `<span class="chip tam ${CHIP_COLORS[i % CHIP_COLORS.length]}">${esc(e.tamil)}</span>`).join("");
+  }
+  function cardArt(game) {
+    const w = lexicon.words;
+    switch (game.id) {
+      case "catch": return `<div class="kid" style="left:14px">${kidSvg(HOODIES.yellow)}</div><div class="emo float" style="right:28px;top:22px">${starSvg(96)}</div><span class="emo" style="right:130px;top:16px;font-size:22px">✨</span><span class="emo" style="right:16px;top:118px;font-size:18px">✨</span>`;
+      case "balloon": {
+        const cols = ["#ff5fa2", "#43c24a", "#9b59ea", "#ffd23f"], pos = [{ l: 120, t: 6 }, { l: 190, t: 0 }, { l: 250, t: 30 }, { l: 165, t: 60 }];
+        const bs = [w[0], w[10], w[13], w[18]].map((e, i) => `<div class="balloon" style="left:${pos[i].l}px;top:${pos[i].t}px;transform:scale(.62);transform-origin:top left">${balloonSvg(cols[i])}<div class="lbl tam">${esc(e.tamil)}</div></div>`).join("");
+        return `<div class="kid" style="left:10px">${kidSvg(HOODIES.blue, { arm: "up" })}</div>${bs}<span class="emo" style="left:222px;top:58px;font-size:34px">💥</span>`;
+      }
+      case "feed": return `<div class="kid" style="left:14px">${kidSvg(HOODIES.green)}</div><span class="emo" style="left:96px;top:66px;font-size:30px">🍌</span><span class="emo float" style="right:24px;bottom:8px;font-size:96px">🐘</span><div class="say tam" style="right:120px;top:12px">பால்</div>`;
+      case "match": return `<div class="kid" style="left:14px">${kidSvg(HOODIES.purple, { headphones: true })}</div><div class="say" style="left:140px;top:16px;font-size:34px;padding:8px 18px">🔊</div><div style="position:absolute;left:150px;top:96px;display:flex;gap:6px">${[w[0], w[13], w[17]].map((e, i) => `<span class="chip tam ${CHIP_COLORS[i]}" style="height:34px;font-size:15px">${esc(e.tamil)}</span>`).join("")}</div>`;
+      case "build": return `<div class="kid" style="left:2px">${kidSvg(HOODIES.pink)}</div><div class="blk tam" style="left:108px;top:74px;width:50px;height:50px;font-size:18px;background:#ff9f1c">அம்</div><span class="emo" style="left:162px;top:80px;font-size:24px;color:#3b8dff">+</span><div class="blk tam" style="left:184px;top:74px;width:50px;height:50px;font-size:18px;background:#43c24a">மா</div><span class="emo" style="left:238px;top:80px;font-size:24px;color:#3b8dff">→</span><div class="board tam" style="left:266px;top:72px;font-size:18px;padding:5px 10px">அம்மா</div><div class="say tam" style="left:130px;top:8px;font-size:15px">அம்மா 🥛</div>`;
+      case "hunt": return `<div class="path" style="bottom:36px"></div>${[0, 1, 2].map((i) => `<div class="stone" style="left:${150 + i * 58}px;bottom:22px;width:40px;height:40px;font-size:13px">${i + 1}</div>`).join("")}<div class="kid" style="left:6px">${kidSvg(HOODIES.teal, { hat: true, arm: "down" })}</div><div class="chest" style="right:14px;bottom:26px;width:90px">${chestSvg()}</div><span class="emo" style="right:36px;top:8px;font-size:26px">⭐</span>`;
+    }
+    return "";
+  }
+  function showHub() {
+    stopRecordingIfAny(); stopSpeech(); $("banner").classList.remove("hidden");
+    const samples = { catch: [0, 10, 13, 18], balloon: [1, 11, 14, 19], feed: [12, 4, 9, 15], match: [5, 6, 16, 17], build: [0, 9, 19, 3], hunt: [2, 7, 8, 16] };
+    $("view").innerHTML = `<div class="grid">${GAMES.map((g) => `
+      <button class="card c-${g.color}" data-game="${g.id}" aria-label="${esc(g.title)}">
+        <div class="art">${cardArt(g)}</div>
+        ${levelDots(g)}
+        <div class="ribbon">${g.icon} ${esc(g.title)} ${g.icon}</div>
+        <div class="desc">${esc(g.desc)}</div>
+        <div class="chips">${chipRow(samples[g.id].map((i) => lexicon.words[i]))}</div>
+      </button>`).join("")}</div>`;
+    for (const b of document.querySelectorAll(".card")) b.onclick = () => { sfx.tap(); showLevels(GAMES.find((g) => g.id === b.dataset.game)); };
+    window.scrollTo({ top: 0 });
+  }
+
+  /* =========================================================
+     level picker
+     ========================================================= */
+  function showLevels(game) {
+    stopRecordingIfAny(); stopSpeech(); $("banner").classList.add("hidden");
+    $("view").innerHTML = `<section class="panel c-${game.color}">
+      <div class="ptop"><button class="pbtn light" id="backBtn">← Arcade</button><div class="ribbon">${game.icon} ${esc(game.title)} ${game.icon}</div></div>
+      <p class="intro">${esc(game.desc)}<br>Start with <b>Words</b>, then <b>Simple Sentences</b>, then <b>Longer Sentences</b>. Finish a step to open the next one!</p>
+      <div class="levels-pick">${LEVELS.map((l, i) => {
+        const st = levelState(game.id, l.key), open = unlocked(game.id, i);
+        return `<button class="lvl" data-level="${i}" ${open ? "" : "disabled"}>
+          <span class="num">${i + 1}</span>${open ? "" : `<span class="lock">🔒</span>`}
+          <div class="e">${l.emoji}</div><b>${l.name}</b><small>${l.hint} · ${ROUNDS} rounds</small>
+          <div class="best">${st.best ? "⭐".repeat(st.best) + "☆".repeat(Math.max(0, ROUNDS - st.best)) : (open ? "☆".repeat(ROUNDS) : `Finish ${LEVELS[i - 1].name} first`)}</div>
+        </button>`; }).join("")}</div>
+    </section>`;
+    $("backBtn").onclick = showHub;
+    for (const b of document.querySelectorAll(".lvl")) b.onclick = () => { sfx.tap(); startLevel(game, +b.dataset.level); };
+    window.scrollTo({ top: 0 });
+  }
+
+  /* =========================================================
+     one play session: a game at one level, five rounds
+     ========================================================= */
+  let S = null;  // { game, level, items, round, won, extra }
+  async function startLevel(game, li) {
+    const level = LEVELS[li];
+    let pool = lexicon[level.cat].map((e) => Object.assign({}, e, { cat: level.cat }));
+    // Build the Word needs something to build: only words with 2+ syllables
+    if (game.id === "build" && li === 0) pool = pool.filter((e) => (e.syllables || 1) >= 2);
+    S = { game, level, li, items: shuffle(pool).slice(0, ROUNDS), round: 0, won: 0, results: [] };
+    renderPanel();
+    await playRound();
+  }
+  function renderPanel() {
+    const { game, level } = S;
+    $("view").innerHTML = `<section class="panel c-${game.color}">
+      <div class="ptop">
+        <button class="pbtn light" id="backBtn">← Back</button>
+        <div class="ribbon">${game.icon} ${esc(game.title)} ${game.icon}</div>
+        <div class="lvl-pill">${level.emoji} ${level.name}</div>
+        <div class="rounds" id="rounds"></div>
+      </div>
+      <div class="stage" id="stage"></div>
+      <div class="target" id="target"></div>
+      <div id="extra"></div>
+      <div class="controls" id="controls">
+        <button class="pbtn" id="listenBtn">🔊 Listen</button>
+        <button class="mic" id="mic" title="Tap to record, tap again to stop">🎙️</button>
+        <button class="pbtn" id="slowBtn">🐢 Slow</button>
+        <div class="meter"><div id="level"></div></div>
+        <div class="hint" id="hint"></div>
+      </div>
+      <div class="result" id="result"></div>
+    </section>`;
+    $("backBtn").onclick = () => { stopRecordingIfAny(); showLevels(game); };
+    $("mic").onclick = toggleMic;
+    renderRounds();
+  }
+  function renderRounds() {
+    $("rounds").innerHTML = S.items.map((_, i) => `<span class="${S.results[i] ? "won" : ""} ${i === S.round ? "now" : ""}">${S.results[i] ? "⭐" : i + 1}</span>`).join("");
+  }
+  function currentItem() { return S.items[S.round]; }
+  function setTarget(entry, { secret = false } = {}) {
+    const t = $("target"); t.className = "target" + (secret ? " secret" : "");
+    t.innerHTML = secret ? `<div class="t">❓ ❓ ❓</div><div class="r">Listen, then choose the ${S.game.unit[S.level.key]} you heard</div>`
+      : `<div class="t tam" style="font-size:${[40, 34, 30][S.li]}px">${esc(entry.tamil)}</div><div class="r">${esc(entry.roman)}</div><div class="m">"${esc(entry.meaning)}"</div>`;
+  }
+  function wireListen(entry) {
+    $("listenBtn").onclick = (e) => hear(entryUrl(entry, "normal"), e.currentTarget);
+    $("slowBtn").onclick = (e) => hear(entryUrl(entry, "slow"), e.currentTarget);
+  }
+  function roundWon(fromEl) {
+    S.results[S.round] = true; S.won++; addStars(1); renderRounds(); flyStar(fromEl); sfx.win(); voice("correct");
+  }
+  function roundLost(r) { sfx[r.verdict === "close" ? "near" : "lose"](); voice(r.verdict); }
+  function retryActions(extraHtml = "") {
+    return `<div class="acts">${extraHtml}<button class="pbtn" id="againBtn">🎙️ Try again</button><button class="pbtn light" id="skipBtn">Skip →</button></div>`;
+  }
+  function nextActions(label = "Next →") { return `<div class="acts"><button class="pbtn" id="nextBtn">${label}</button></div>`; }
+  function wireResultButtons() {
+    const a = $("againBtn"), s = $("skipBtn"), n = $("nextBtn");
+    if (a) a.onclick = () => { hideResult(); setHint("Tap the mic and say it!"); micEnabled(true); };
+    if (s) s.onclick = () => nextRound();
+    if (n) n.onclick = () => nextRound();
+  }
+  async function nextRound() {
+    stopSpeech(); hideResult(); S.round++;
+    if (S.round >= S.items.length) return finishLevel();
+    renderRounds(); await playRound();
+  }
+  function finishLevel() {
+    const { game, level, li, won } = S;
+    const st = levelState(game.id, level.key);
+    setLevelState(game.id, level.key, { done: true, best: Math.max(st.best || 0, won), plays: (st.plays || 0) + 1 });
+    if (won >= 3) confetti(); sfx.open();
+    const next = LEVELS[li + 1];
+    $("view").innerHTML = `<section class="panel c-${game.color}"><div class="end">
+      <h2>${won === ROUNDS ? "Perfect! 🏆" : won >= 3 ? "Great job! 🎉" : "Good try! 💪"}</h2>
+      <div class="got">${"⭐".repeat(won)}${"☆".repeat(ROUNDS - won)}</div>
+      <p>You earned <b>${won}</b> star${won === 1 ? "" : "s"} in ${esc(game.title)} — ${level.name}.${next ? ` <b>${next.name}</b> is now open!` : " You finished every step of this game!"}</p>
+      <div class="acts">
+        ${next ? `<button class="pbtn" id="nextLvl">${next.emoji} Play ${next.name} →</button>` : ""}
+        <button class="pbtn light" id="replay">🔁 Play again</button>
+        <button class="pbtn light" id="toHub">🏠 Arcade</button>
+      </div></div></section>`;
+    if (next) $("nextLvl").onclick = () => startLevel(game, li + 1);
+    $("replay").onclick = () => startLevel(game, li);
+    $("toHub").onclick = showHub;
+  }
+
+  async function playRound() {
+    hideResult(); micEnabled(true); onClip = null;
+    await ({ catch: roundCatch, balloon: roundBalloon, feed: roundFeed, match: roundMatch, build: roundBuild, hunt: roundHunt })[S.game.id]();
+  }
+  /* shared: record, judge against the current entry, react */
+  function armSimple(entry, onCorrect, onWrong) {
+    onClip = async (clip, name) => {
+      micEnabled(false); setHint("Thinking… 🤔");
+      let r; try { r = await judgeEntry(entry, clip, name); } catch (e) { setHint(""); micEnabled(true); return showResult("bad", `${esc(e.message)}${retryActions()}`), wireResultButtons(); }
+      setHint("");
+      if (r.verdict === "correct") { onCorrect(r); }
+      else { roundLost(r); onWrong && onWrong(r); showResult(verdictKind(r.verdict), `${r.verdict === "close" ? "So close! 😊" : r.verdict === "no_speech" ? "I didn't hear anything 🤫" : "Not quite — listen and try again 💪"}${heardLine(r)}${retryActions(`<button class="pbtn light" id="hearBtn">🔊 Hear it</button>`)}`); wireResultButtons(); $("hearBtn").onclick = (e) => hear(entryUrl(entry, "slow"), e.currentTarget); }
+    };
+  }
+
+  /* ---------- 1. Say & Catch ---------- */
+  async function roundCatch() {
+    const e = currentItem(), stage = $("stage");
+    const sx = (stage.clientWidth || 700) - 180;
+    stage.innerHTML = `<div class="kid" style="left:30px">${kidSvg(HOODIES.yellow)}</div>
+      <div class="emo star-fly float" id="star" style="left:${sx}px;top:30px">${starSvg(110)}</div>
+      <span class="emo" style="left:${sx - 40}px;top:20px;font-size:26px">✨</span><span class="emo" style="left:${sx + 120}px;top:150px;font-size:22px">✨</span>`;
+    setTarget(e); wireListen(e); setHint(`Say the ${S.game.unit[S.level.key]} and catch the star! 🎙️`);
+    $("extra").innerHTML = "";
+    armSimple(e, (r) => {
+      const star = $("star"); star.classList.remove("float"); star.style.left = "110px"; star.style.top = "80px"; star.style.transform = "scale(.7) rotate(360deg)";
+      sparkleAt(stage, 150, 100); roundWon(star);
+      showResult("ok", `🌟 You caught the star!${heardLine(r)}${nextActions()}`); wireResultButtons();
+    });
+  }
+
+  /* ---------- 2. Balloon Speech ---------- */
+  async function roundBalloon() {
+    const target = currentItem(), n = S.li === 0 ? 4 : 3;
+    const others = shuffle(lexicon[S.level.cat].filter((x) => x.id !== target.id)).slice(0, n - 1);
+    const options = shuffle([target, ...others]);
+    const cols = ["#ff5fa2", "#43c24a", "#9b59ea", "#ffd23f"], stage = $("stage");
+    const width = stage.clientWidth || 700, bw = S.li ? 150 : 96, gap = Math.max(bw + 6, Math.min(170, (width - 180 - bw) / (n - 1)));
+    stage.innerHTML = `<div class="kid" style="left:20px">${kidSvg(HOODIES.blue)}</div>` + options.map((o, i) =>
+      `<div class="balloon float ${S.li ? "sent" : ""}" id="b${i}" style="left:${160 + i * gap}px;top:${S.li ? 10 : 16 + (i % 2) * 22}px;animation-delay:${i * .4}s">${balloonSvg(cols[i])}<div class="lbl tam">${esc(o.tamil)}</div></div>`).join("");
+    setTarget(target); wireListen(target); setHint("Say it — the balloon that hears you will pop! 🎈");
+    $("extra").innerHTML = "";
+    onClip = async (clip, name) => {
+      micEnabled(false); setHint("Thinking… 🤔");
+      let r; try { r = await judgePick(target, options, clip, name); } catch (e) { setHint(""); micEnabled(true); showResult("bad", `${esc(e.message)}${retryActions()}`); return wireResultButtons(); }
+      setHint("");
+      const idx = options.findIndex((o) => o.id === target.id);
+      if (r.picked) {
+        const b = $("b" + r.picked.index); b.classList.add("pop"); sfx.pop();
+        const burst = document.createElement("span"); burst.className = "burst"; burst.textContent = "💥"; burst.style.left = b.style.left; burst.style.top = "40px"; stage.appendChild(burst); setTimeout(() => burst.remove(), 800);
+      }
+      if (r.correct) { roundWon($("b" + idx)); showResult("ok", `🎈 Pop! You popped the right balloon!${heardLine(r)}${nextActions()}`); wireResultButtons(); }
+      else {
+        roundLost(r);
+        const msg = r.picked ? `Oops — that popped <span class="tam">${esc(r.picked.tamil)}</span> (${esc(r.picked.roman)}) instead.` : "No balloon heard that clearly.";
+        showResult(verdictKind(r.verdict), `${msg}${heardLine(r)}${retryActions(`<button class="pbtn light" id="hearBtn">🔊 Hear it</button>`)}`); wireResultButtons();
+        $("hearBtn").onclick = (e) => hear(entryUrl(target, "slow"), e.currentTarget);
+        if (r.picked) setTimeout(() => { const b = $("b" + r.picked.index); if (b) { b.classList.remove("pop"); b.style.opacity = "1"; } }, 900);
+      }
+    };
+  }
+
+  /* ---------- 3. Feed the Animal ---------- */
+  async function roundFeed() {
+    const e = currentItem(), animal = pick(ANIMALS), food = pick(FOODS), stage = $("stage");
+    stage.innerHTML = `<div class="kid" style="left:26px">${kidSvg(HOODIES.green)}</div>
+      <span class="emo food-fly" id="food" style="left:118px;top:96px;font-size:44px">${food}</span>
+      <span class="emo float" id="animal" style="right:40px;bottom:14px;font-size:120px">${animal}</span>
+      <div class="say tam" style="right:150px;top:14px;max-width:260px;font-size:${S.li ? 15 : 20}px">${esc(e.tamil)} 🍽️</div>`;
+    setTarget(e); wireListen(e); setHint(`Say the ${S.game.unit[S.level.key]} to feed the ${animal}! 🎙️`);
+    $("extra").innerHTML = "";
+    armSimple(e, (r) => {
+      const f = $("food"), a = $("animal"); const ar = a.getBoundingClientRect(), sr = stage.getBoundingClientRect();
+      f.style.left = ar.left - sr.left + ar.width / 2 - 22 + "px"; f.style.top = ar.top - sr.top + ar.height / 2 - 30 + "px";
+      setTimeout(() => { f.style.transform = "scale(0)"; a.classList.remove("float"); a.classList.add("yum"); sparkleAt(stage, ar.left - sr.left + ar.width / 2, 80); }, 850);
+      roundWon(a);
+      showResult("ok", `😋 Yum! The ${animal} loved it!${heardLine(r)}${nextActions()}`); wireResultButtons();
+    });
+  }
+
+  /* ---------- 4. Sound Match ---------- */
+  async function roundMatch() {
+    const target = currentItem(), n = S.li === 0 ? 4 : 3;
+    const options = shuffle([target, ...shuffle(lexicon[S.level.cat].filter((x) => x.id !== target.id)).slice(0, n - 1)]);
+    const stage = $("stage");
+    stage.innerHTML = `<div class="kid" style="left:26px">${kidSvg(HOODIES.purple, { headphones: true })}</div>
+      <button class="say" id="bigPlay" style="left:170px;top:40px;font-size:56px;padding:14px 26px;border:0;cursor:pointer" title="Play the sound">🔊</button>
+      <span class="emo" style="left:330px;top:40px;font-size:30px;color:#9b59ea">♪</span><span class="emo" style="left:360px;top:90px;font-size:24px;color:#9b59ea">♫</span>`;
+    setTarget(target, { secret: true }); micEnabled(false); $("controls").classList.add("hidden");
+    $("extra").innerHTML = `<div class="choices">${options.map((o, i) => `<button class="choice" data-i="${i}"><span class="tam">${esc(o.tamil)}</span><small>${esc(o.roman)}</small></button>`).join("")}</div>`;
+    const play = (btn) => hear(entryUrl(target, "normal"), btn);
+    $("bigPlay").onclick = (e) => play(e.currentTarget);
+    $("listenBtn").onclick = (e) => play(e.currentTarget); $("slowBtn").onclick = (e) => hear(entryUrl(target, "slow"), e.currentTarget);
+    await sleep(300); play(null);
+    let tries = 0;
+    for (const b of document.querySelectorAll(".choice")) b.onclick = () => {
+      const o = options[+b.dataset.i]; tries++;
+      if (o.id === target.id) {
+        for (const x of document.querySelectorAll(".choice")) x.disabled = true; b.classList.add("right");
+        setTarget(target); sparkleAt(stage, 220, 70);
+        if (tries === 1) { roundWon(b); showResult("ok", `🎧 That's the one! Now say it for a bonus try 🎙️${nextActions()}`); }
+        else { sfx.near(); showResult("near", `That's it! 👍 (found on try ${tries})${nextActions()}`); }
+        wireResultButtons();
+        // a bonus: saying it is an extra practice, never a lost star
+        $("controls").classList.remove("hidden"); micEnabled(true); setHint("Bonus: say it out loud! (or press Next)");
+        armSimple(target, (r) => { sparkleAt(stage, 220, 70); sfx.win(); voice("correct"); showResult("ok", `🌟 Said perfectly!${heardLine(r)}${nextActions()}`); wireResultButtons(); micEnabled(false); },
+                  () => { });
+      } else { b.classList.add("wrong"); b.disabled = true; sfx.lose(); toast("Not that one — listen again 🔊"); play(null); }
+    };
+  }
+
+  /* ---------- 5. Build the Word ---------- */
+  async function roundBuild() {
+    const e = currentItem(), stage = $("stage");
+    setTarget(e); wireListen(e); $("extra").innerHTML = ""; setHint("Loading the pieces…"); micEnabled(false);
+    let steps; try { steps = (await api(`/decompose/${encodeURIComponent(e.id)}`, { auth: false })).steps; } catch (err) { setHint(""); showResult("bad", `${esc(err.message)}${nextActions("Skip →")}`); return wireResultButtons(); }
+    const pieces = steps.filter((s) => s.kind === "piece" || s.kind === "word");
+    const cols = ["#ff9f1c", "#43c24a", "#3b8dff", "#9b59ea", "#ff5fa2"];
+    let i = 0;
+    const draw = () => {
+      const bw = S.li ? 120 : 64, gap = 18, startX = 150;
+      stage.innerHTML = `<div class="kid" style="left:6px">${kidSvg(HOODIES.pink)}</div>` +
+        pieces.map((p, k) => `<div class="blk tam" id="p${k}" style="left:${startX + k * (bw + gap)}px;top:34px;width:${bw}px;height:56px;font-size:${S.li ? 15 : 22}px;background:${k < i ? cols[k % cols.length] : "#bbb"};${k === i ? "box-shadow:0 0 0 5px #ffd23f, 0 5px 0 rgba(0,0,0,.2)" : ""}">${esc(p.text)}</div>` +
+          (k < pieces.length - 1 ? `<span class="emo" style="left:${startX + k * (bw + gap) + bw + 1}px;top:44px;font-size:22px;color:#3b8dff">+</span>` : "")).join("") +
+        `<div class="board tam" style="left:${startX}px;top:150px;min-width:180px;font-size:${S.li ? 18 : 24}px">${pieces.slice(0, i).map((p) => esc(p.text)).join(S.li ? " " : "") || "…"}</div>`;
+    };
+    const askPiece = () => {
+      draw(); const p = pieces[i];
+      setHint(`Piece ${i + 1} of ${pieces.length}: say "${p.text}" (${p.roman}) 🎙️`); micEnabled(true);
+      $("listenBtn").onclick = (ev) => hear(textUrl(p.text, "normal"), ev.currentTarget); $("slowBtn").onclick = (ev) => hear(textUrl(p.text, "slow"), ev.currentTarget);
+      onClip = async (clip, name) => {
+        micEnabled(false); setHint("Thinking… 🤔");
+        let r; try { r = await judgeText(p.text, clip, name, true); } catch (err) { setHint(""); micEnabled(true); showResult("bad", `${esc(err.message)}${retryActions()}`); return wireResultButtons(); }
+        setHint("");
+        if (r.verdict === "correct") { sfx.step(); i++; sparkleAt(stage, 200 + i * 70, 60); if (i < pieces.length) { hideResult(); askPiece(); } else askWhole(); }
+        else { sfx[r.verdict === "close" ? "near" : "lose"](); showResult(verdictKind(r.verdict), `Try that piece again: <span class="tam">${esc(p.text)}</span>${heardLine(r)}${retryActions(`<button class="pbtn light" id="hearBtn">🔊 Hear it</button>`)}`); wireResultButtons(); $("hearBtn").onclick = (ev) => hear(textUrl(p.text, "slow"), ev.currentTarget); $("skipBtn").textContent = "Skip piece →"; $("skipBtn").onclick = () => { hideResult(); i++; i < pieces.length ? askPiece() : askWhole(); }; }
+      };
+    };
+    const askWhole = () => {
+      draw(); wireListen(e); setHint(`Now the whole ${S.game.unit[S.level.key]}: "${e.tamil}" 🎙️`); micEnabled(true);
+      armSimple(e, (r) => { sparkleAt(stage, 260, 150, 10); roundWon($("stage").querySelector(".board")); showResult("ok", `🧱 You built it: <span class="tam">${esc(e.tamil)}</span>!${heardLine(r)}${nextActions()}`); wireResultButtons(); });
+    };
+    if (pieces.length < 2) askWhole(); else askPiece();
+  }
+
+  /* ---------- 6. Treasure Hunt ---------- */
+  async function roundHunt() {
+    // One hunt per level: every round is a stepping stone on the same path.
+    const e = currentItem(), stage = $("stage"), n = S.items.length;
+    const xs = S.items.map((_, k) => 120 + k * ((stage.clientWidth || 700) - 300) / (n - 1));
+    stage.innerHTML = `<div class="path"></div>` + S.items.map((it, k) => `<div class="stone ${S.results[k] ? "done" : ""} ${k === S.round ? "now" : ""}" style="left:${xs[k]}px">${S.results[k] ? "⭐" : k + 1}</div>`).join("") +
+      `<div class="kid walker" id="walker" style="left:${S.round ? xs[S.round - 1] - 60 : xs[0] - 120}px">${kidSvg(HOODIES.teal, { hat: true, arm: "down" })}</div>
+       <div class="chest" id="chest">${chestSvg()}</div>
+       <div class="say tam" style="left:${Math.min(xs[S.round] - 40, (stage.clientWidth || 700) - 240)}px;top:30px;max-width:230px;font-size:${S.li ? 14 : 18}px">${esc(e.tamil)}</div>`;
+    setTarget(e); wireListen(e); $("extra").innerHTML = ""; setHint(`Stone ${S.round + 1} of ${n}: say it to step forward! 🧭`);
+    armSimple(e, (r) => {
+      const w = $("walker"); w.style.left = xs[S.round] - 60 + "px"; sfx.step();
+      const last = S.round === n - 1;
+      roundWon(document.querySelectorAll(".stone")[S.round]);
+      if (last) { setTimeout(() => { $("chest").classList.add("open"); sfx.open(); sparkleAt(stage, (stage.clientWidth || 700) - 90, 120, 12); }, 700); }
+      showResult("ok", `${last ? "🏆 You reached the treasure chest — it's open!" : "👣 Step! Keep going!"}${heardLine(r)}${nextActions(last ? "Collect the treasure →" : "Next stone →")}`); wireResultButtons();
+    });
+  }
+
+  /* =========================================================
+     settings
+     ========================================================= */
+  function renderPrefs() { const p = prefs(); $("sVoice").textContent = p.voice ? "On" : "Off"; $("sVoice").classList.toggle("on", p.voice); $("sSfx").textContent = p.sfx ? "On" : "Off"; $("sSfx").classList.toggle("on", p.sfx); }
+  $("gearBtn").onclick = () => { renderPrefs(); renderStars(); $("modalBg").classList.add("show"); };
+  $("sClose").onclick = () => $("modalBg").classList.remove("show");
+  $("modalBg").onclick = (e) => { if (e.target === $("modalBg")) $("modalBg").classList.remove("show"); };
+  $("sVoice").onclick = () => { setPref("voice", !prefs().voice); renderPrefs(); };
+  $("sSfx").onclick = () => { setPref("sfx", !prefs().sfx); renderPrefs(); sfx.tap(); };
+  $("sReset").onclick = () => { if (confirm("Reset all arcade stars and levels?")) { save({ prefs: prefs() }); renderStars(); $("modalBg").classList.remove("show"); showHub(); } };
+
+  /* =========================================================
+     boot
+     ========================================================= */
+  async function boot() {
+    $("avatar").innerHTML = kidSvg("#e8323c", { arm: "down" });
+    if (token) {
+      try { student = (await api("/api/student/me")).student; }
+      catch { student = null; }
+    }
+    if (student) {
+      $("hiName").textContent = `Hi ${student.first_name || "Champ"}!`;
+      if (student.photo_url) $("avatar").innerHTML = `<img src="${esc(student.photo_url)}" alt="" />`;
+      $("sWho").textContent = student.name || student.username || "child";
+    } else $("sWho").textContent = "guest (stars stay on this device)";
+    renderStars();
+    try {
+      lexicon = await api("/lexicon", { auth: false });
+      for (const cat of ["words", "sentences", "long_sentences"]) for (const e of lexicon[cat]) { e.cat = cat; byId[e.id] = e; }
+    } catch (e) {
+      $("view").innerHTML = `<section class="panel c-blue"><div class="end"><h2>Hmm 🤔</h2><p>${esc(e.message)}</p><p>Start the Tamil Tutor server, then reload this page.</p></div></section>`;
+      return;
+    }
+    showHub();
+  }
+  window.addEventListener("beforeunload", stopRecordingIfAny);
+  // ?debug lets a test feed a clip in as if the microphone had produced it
+  if (location.search.includes("debug")) window.__arcade = { clip: (blob, name) => onClip && onClip(blob, name), state: () => S, start: startLevel, games: GAMES, store };
+  boot();
+})();
+</script>
+</body>
+</html>
