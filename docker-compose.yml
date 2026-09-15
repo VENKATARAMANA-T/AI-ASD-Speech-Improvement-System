@@ -1,0 +1,26 @@
+# The portal's PostgreSQL database.  `docker compose up -d` starts it on port
+# 5433 with the credentials DATABASE_URL defaults to; the data survives
+# restarts in the named volume.  Change POSTGRES_PASSWORD and DATABASE_URL
+# together for anything beyond local development.
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: tamiltutor-pg
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: tamiltutor
+      POSTGRES_PASSWORD: tamiltutor
+      POSTGRES_DB: tamiltutor
+    ports:
+      - "5433:5432"
+    volumes:
+      - tamiltutor-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tamiltutor -d tamiltutor"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  tamiltutor-pgdata:
+    name: tamiltutor-pgdata
